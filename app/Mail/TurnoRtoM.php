@@ -37,7 +37,7 @@ class TurnoRtoM extends Mailable
      */
     public function build()
     {
-        return $this->from('turnoslasheras@revitotal.com.ar','Revitotal - Las Heras')
+        return $this->from('turnos@rtorivadavia.com.ar','RTO Rivadavia')
             ->view('emails.nuevoturno');
     }
 }

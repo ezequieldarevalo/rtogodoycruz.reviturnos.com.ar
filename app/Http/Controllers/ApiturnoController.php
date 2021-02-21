@@ -44,10 +44,12 @@ class ApiturnoController extends Controller
 
         }else{
 
-            $data=[
-                 'email' => 'lhrevitotal@revitotal.com.ar',
-                 'password' => 'LHrevitotalsa019'
-            ];
+            
+            // conseguir credenciales rto mendoza
+            // $data=[
+            //      'email' => '@rtorivadavia.com.ar',
+            //      'password' => ''
+            // ];
 
             try{
                 
@@ -358,7 +360,7 @@ class ApiturnoController extends Controller
         }
 
         
-        if($datos_turno["departamento"]!="Las Heras"){
+        if($datos_turno["departamento"]!="Rivadavia"){
             $respuestaError=[
                 'mensaje' => 'Planta incorrecta'
             ];
@@ -443,7 +445,9 @@ class ApiturnoController extends Controller
         if($turno->origen == "T"){
 
             $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
-            $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDU5IiwiaWF0IjoxNjEzNjY5OTA2LCJleHAiOjE2NDUyMjY4NTgsIk9JRCI6NDQ1OSwiVElEIjoiWUFDQVJFX0FQSSJ9.8vVyQ9Eh4f5-IqScABBb6mTYeHiva7cUbD2ZMnfdZSvk4SjPrroI60uZbfInhoEXfUrzP8l-CYwtX4iEFS8e0g';
+            
+            // conseguir token yacare
+            // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDU5IiwiaWF0IjoxNjEzNjY5OTA2LCJleHAiOjE2NDUyMjY4NTgsIk9JRCI6NDQ1OSwiVElEIjoiWUFDQVJFX0FQSSJ9.8vVyQ9Eh4f5-IqScABBb6mTYeHiva7cUbD2ZMnfdZSvk4SjPrroI60uZbfInhoEXfUrzP8l-CYwtX4iEFS8e0g';
             
             $datos_post='{
                 "buyer": {
@@ -454,7 +458,7 @@ class ApiturnoController extends Controller
                 "expirationTime": 28800,
                 "items": [
                     {
-                    "name": "Turno RTO Las Heras",
+                    "name": "Turno RTO Rivadavia",
                     "quantity": "1",
                     "unitPrice": "'.$precio_float.'"
                     }
@@ -656,7 +660,9 @@ class ApiturnoController extends Controller
         if($turno->origen == "T"){
 
             $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
-            $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDU5IiwiaWF0IjoxNjEzNjY5OTA2LCJleHAiOjE2NDUyMjY4NTgsIk9JRCI6NDQ1OSwiVElEIjoiWUFDQVJFX0FQSSJ9.8vVyQ9Eh4f5-IqScABBb6mTYeHiva7cUbD2ZMnfdZSvk4SjPrroI60uZbfInhoEXfUrzP8l-CYwtX4iEFS8e0g';
+            
+            // conseguir token yacare
+            // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDU5IiwiaWF0IjoxNjEzNjY5OTA2LCJleHAiOjE2NDUyMjY4NTgsIk9JRCI6NDQ1OSwiVElEIjoiWUFDQVJFX0FQSSJ9.8vVyQ9Eh4f5-IqScABBb6mTYeHiva7cUbD2ZMnfdZSvk4SjPrroI60uZbfInhoEXfUrzP8l-CYwtX4iEFS8e0g';
             
             $datos_post='{
                 "buyer": {
@@ -667,7 +673,7 @@ class ApiturnoController extends Controller
                 "expirationTime": 28800,
                 "items": [
                     {
-                    "name": "Turno RTO Las Heras",
+                    "name": "Turno RTO Rivadavia",
                     "quantity": "1",
                     "unitPrice": "'.$precio_float.'"
                     }

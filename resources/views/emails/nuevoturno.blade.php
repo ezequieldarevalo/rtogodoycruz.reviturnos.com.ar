@@ -7,7 +7,7 @@ h3{
 </style>
 
     <div>
-        <p>Usted acaba de reservar un turno para realizar la RTO en la planta de Las Heras de Revitotal</p>
+        <p>Usted acaba de reservar un turno para realizar la RTO en la planta RTO Rivadavia</p>
         
         <h2>Detalles de su turno:</h2>
         
