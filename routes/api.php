@@ -26,13 +26,7 @@ Route::group([
 ], function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('signup', [AuthController::class, 'signUp']);
-    Route::get('respYac', [ApiturnoController::class, 'respuestaYacare']);
-    Route::get('getToken', [ApiturnoController::class, 'solicitarToken']);
-    Route::post('getTurnos', [ApiturnoController::class, 'obtenerTurnos']);
-    Route::post('getTurnosProv', [ApiturnoController::class, 'obtenerTurnosProv']);
     Route::post('solTur', [ApiturnoController::class, 'solicitarTurno']);
-    Route::post('solTurProv', [ApiturnoController::class, 'solicitarTurnoProv']);
-    Route::post('token', [ApiturnoController::class, 'obtenerToken']);
     Route::post('valTur', [ApiturnoController::class, 'validarTurno']);
 
     Route::group([
