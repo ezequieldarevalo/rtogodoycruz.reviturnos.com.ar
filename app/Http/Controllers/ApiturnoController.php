@@ -357,6 +357,14 @@ class ApiturnoController extends Controller
         // si el status code es 200 y el status es success obtengo los datos del turno
         $datos_turno=$response["turno"];
 
+        if($datos_turno["estado"]!="PENDIENTE"){
+            $respuestaError=[
+                'status' => 'failed',
+                'message' => 'Su turno no se encuentra activo.'
+            ];
+            return response()->json($respuestaError,400);
+        }
+
 
         $vehiculo=Precio::where('descripcion',$datos_turno["tipo_de_vehiculo"])->first();
 
