@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SimulacionController;
+use App\Http\Controllers\ApiturnoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,11 +26,21 @@ Route::group([
 ], function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('signup', [AuthController::class, 'signUp']);
+    Route::get('respYac', [ApiturnoController::class, 'respuestaYacare']);
+    Route::get('getToken', [ApiturnoController::class, 'solicitarToken']);
+    Route::post('getTurnos', [ApiturnoController::class, 'obtenerTurnos']);
+    Route::post('getTurnosProv', [ApiturnoController::class, 'obtenerTurnosProv']);
+    Route::post('solTur', [ApiturnoController::class, 'solicitarTurno']);
+    Route::post('solTurProv', [ApiturnoController::class, 'solicitarTurnoProv']);
+    Route::post('token', [ApiturnoController::class, 'obtenerToken']);
+    Route::post('valTur', [ApiturnoController::class, 'validarTurno']);
 
     Route::group([
       'middleware' => 'auth:api'
     ], function() {
         Route::get('logout', [AuthController::class, 'logout']);
         Route::get('user', [AuthController::class, 'user']);
+        Route::post('verify', [SimulacionController::class, 'verify']);
+        Route::post('obtTur', [ApiturnoController::class, 'obtenerTurnos']);
     });
 });
