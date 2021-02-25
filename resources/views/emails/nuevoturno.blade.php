@@ -1,26 +1,46 @@
+<html>
+<head>
 <style>
-h3{
-    display: inline;
-    font-weight: bold;
 
+html{
+    width: 100%;
+}
+
+.cont{
+    margin-left: 20px;
+}
+
+.titulo{
+    font-size: 25px;
+}
+
+.dato{
+    font-size: 20px;
+    font-weight: bold
 }
 </style>
+</head>
 
-    <div>
+<body>
+    <div class="cont">
         <p>Usted acaba de reservar un turno para realizar la RTO en la planta RTO Rivadavia</p>
         
-        <h2>Detalles de su turno:</h2>
+        <div class="titulo">Detalles de su turno:</div>
         
-        <h3>Nombre:</h3> {{ $turnomail->nombre }}<br/>
-        <h3>Dominio:</h3> {{ $turnomail->dominio }}<br/>
-        <h3>Fecha:</h3> {{ $turnomail->fecha }}<br/>
-        <h3>Hora:</h3> {{ $turnomail->hora }}<br/>
-        <h3>Id de turno:</h3> {{ $turnomail->id }}<br/>
+        <span class="dato">Nombre:&nbsp;</span> {{ $turnomail->nombre }}<br/>
+        <span class="dato">Dominio:&nbsp;</span> {{ $turnomail->dominio }}<br/>
+        <span class="dato">Fecha:&nbsp;</span> {{ $turnomail->fecha }}<br/>
+        <span class="dato">Hora:&nbsp;</span> {{ $turnomail->hora }}<br/>
+        <span class="dato">Id de turno:&nbsp;</span> {{ $turnomail->id }}<br/>
         
         <p>Recuerde que cuenta con 48hs para realizar el pago, de lo contrario se deshabilitará.</p>
         <p>Para realizar el pago si no lo hizo, puedo hacerlo haciendo <a href="{{ $turnomail->url_pago }}">click aquí</a>.</p>
 
 
     </div>
+</body>
+</html>
+
+
 
 
