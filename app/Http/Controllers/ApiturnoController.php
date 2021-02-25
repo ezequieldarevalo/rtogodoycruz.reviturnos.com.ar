@@ -257,8 +257,8 @@ class ApiturnoController extends Controller
         
         if($request->header('Content-Type')!="application/json"){
             $respuesta=[
-                'codigo_error' => 2000,
-                'mensaje_error' => "Debe enviar datos en formato json"
+                'status' => 'failed',
+                'mensaje' => "Debe enviar datos en formato json"
             ];
                     
             return $respuesta;
@@ -276,15 +276,8 @@ class ApiturnoController extends Controller
         if ($validator->fails()) {
             
             $respuesta=[
-                'codigo_error' => 2000,
-                'mensaje_error' => "Datos inválidos",
-                'solicitud' => [
-                    'origen' => $request->input("origen"),
-                    'email' => $request->input("email"),
-                    'id_turno' => $request->input("id_turno"),
-                    'tipo_vehiculo' => $request->input("tipo_vehiculo"),
-                    'nro_turno_rto' => $request->input("nro_turno_rto")
-                ]
+                'status' => 'failed',
+                'mensaje' => "Datos inválidos"
             ];
                     
             return response()->json($respuesta,400);
@@ -300,6 +293,7 @@ class ApiturnoController extends Controller
 
         if($nuevoToken["status"]=='failed'){
             $respuestaError=[
+                'status' => 'failed',
                 'mensaje' => $nuevoToken["mensaje"]
             ];
             return response()->json($respuestaError,400);
@@ -319,6 +313,7 @@ class ApiturnoController extends Controller
         }catch(\Exception $e){
                 
             $respuestaError=[
+                'status' => 'failed',
                 'mensaje' => 'RTO no responde al consultar turno'
             ];
             
@@ -333,6 +328,7 @@ class ApiturnoController extends Controller
 
             
             $respuestaError=[
+                'status' => 'failed',
                 'mensaje' => 'Fallo la consulta al RTO',
                 'token' => $nuevoToken,
                 'turno' => $nro_turno_rto
@@ -343,6 +339,7 @@ class ApiturnoController extends Controller
             if($response["status"]!='success'){
                     
                 $respuestaError=[
+                    'status' => 'failed',
                     'mensaje' => 'Consulta con status no exitoso'
                 ];
                 return response()->json($respuestaError,400);
@@ -355,6 +352,7 @@ class ApiturnoController extends Controller
 
         if($datos_turno["email"]!=$email_solicitud){
             $respuestaError=[
+                'status' => 'failed',
                 'mensaje' => 'Email invalido'
             ];
             return response()->json($respuestaError,400);
@@ -367,6 +365,7 @@ class ApiturnoController extends Controller
         foreach($datosturnos as $datosturno){
             if($datosturno->turno->estado=="P"){
                 $respuesta=[
+                    'status' => 'failed',
                     'mensaje' => "Existe otro turno activo para el dominio indicado"
                 ];      
                 return response()->json($respuesta,400);
@@ -408,8 +407,8 @@ class ApiturnoController extends Controller
                 }else{
                     
                     $respuesta=[
-                        'codigo_error' => 2001,
-                        'mensaje_error' => "El turno ya no se encuentra disponible"
+                        'status' => 'failed',
+                        'mensaje' => "El turno ya no se encuentra disponible"
                     ];
                     
                     return $respuesta;
@@ -418,8 +417,8 @@ class ApiturnoController extends Controller
             }else{
                 
                 $respuesta=[
-                        'codigo_error' => 2002,
-                        'mensaje_error' => "No se encontraron lineas para la planta y el vehiculo ingresados"
+                        'status' => 'failed',
+                        'mensaje' => "No se encontraron lineas para la planta y el vehiculo ingresados"
                     ];
                 return $respuesta;
             }
@@ -475,7 +474,7 @@ class ApiturnoController extends Controller
         if($response["status"]=="ERR"){
 
             $respuesta=[
-                'codigo_error' => 2002,
+                'status' => 'failed',
                 'mensaje' => $response["mensaje"]
             ];
 
