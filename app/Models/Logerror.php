@@ -11,9 +11,9 @@ class Logerror extends Model
     protected $fillable=[
     	"tipo",
         "descripcion",
+        "fix",
     	"id_turno",
-    	"nro_turno_rto",
-        "fechahora"
+    	"nro_turno_rto"
     ];
 
     

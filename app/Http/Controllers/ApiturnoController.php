@@ -11,6 +11,7 @@ use App\Models\Datosturno;
 use App\Models\Token;
 use App\Models\Precio;
 use App\Models\TurnoRto;
+use App\Models\Logerror;
 use Validator;
 use App\Exceptions\MyOwnException;
 use Exception;
@@ -543,54 +544,54 @@ class ApiturnoController extends Controller
 
         }
 
-        $nuevoToken=$this->obtenerToken();
+        // $nuevoToken=$this->obtenerToken();
 
-        if($nuevoToken["status"]=='failed'){
+        // if($nuevoToken["status"]=='failed'){
 
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al obtener token previo a confirmar el turno",
-                "fix" => "CONFIRM",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto
-            ];
+        //     $error=[
+        //         "tipo" => "CRITICO",
+        //         "descripcion" => "Fallo al obtener token previo a confirmar el turno",
+        //         "fix" => "CONFIRM",
+        //         "id_turno" => $turno->id,
+        //         "nro_turno_rto" => $nro_turno_rto
+        //     ];
 
-            Logerror::insert($error);
+        //     Logerror::insert($error);
 
-        }
+        // }
 
-        try{
+        // try{
 
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',$data);
+        //     $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',$data);
 
-            if( $response->getStatusCode()!=200){
+        //     if( $response->getStatusCode()!=200){
 
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo al confirmar turno al RTO",
-                    "fix" => "CONFIRM",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $nro_turno_rto
-                ];
+        //         $error=[
+        //             "tipo" => "CRITICO",
+        //             "descripcion" => "Fallo al confirmar turno al RTO",
+        //             "fix" => "CONFIRM",
+        //             "id_turno" => $turno->id,
+        //             "nro_turno_rto" => $nro_turno_rto
+        //         ];
 
-                Logerror::insert($error);
+        //         Logerror::insert($error);
                 
-            }
+        //     }
 
-        }catch(\Exception $e){
+        // }catch(\Exception $e){
 
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al confirmar turno al RTO",
-                "fix" => "CONFIRM",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto
-            ];
+        //     $error=[
+        //         "tipo" => "CRITICO",
+        //         "descripcion" => "Fallo al confirmar turno al RTO",
+        //         "fix" => "CONFIRM",
+        //         "id_turno" => $turno->id,
+        //         "nro_turno_rto" => $nro_turno_rto
+        //     ];
 
-            Logerror::insert($error);
+        //     Logerror::insert($error);
                 
 
-        }
+        // }
 
 
         $respuesta=[
