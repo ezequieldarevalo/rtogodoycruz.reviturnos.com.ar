@@ -495,6 +495,12 @@ class ApiturnoController extends Controller
                 'nombre' => $nombre_completo,
                 'dominio' => $datos_turno["patente"],
                 'email' => $email_solicitud,
+                'tipo_vehiculo' => $datos_turno["tipo_de_vehiculo"],
+                'marca' => $datos_turno["marca"],
+                'modelo' => $datos_turno["modelo"],
+                'anio' => $datos_turno["anio"],
+                'combustible' => $datos_turno["combustible"],
+                'inscr_mendoza' => $datos_turno["inscripto_en_mendoza"],
                 'id_turno' => $turno->id,
                 'nro_turno_rto' => $nro_turno_rto,
         ));
@@ -519,7 +525,72 @@ class ApiturnoController extends Controller
         $datos_mail->nombre=$nombre_completo;
 
 
-        Mail::to($email_solicitud)->send(new TurnoRtoM($datos_mail));
+        try{
+            
+            Mail::to($email_solicitud)->send(new TurnoRtoM($datos_mail));
+
+        }catch(\Exception $e){
+            
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al enviar datos del turno al cliente",
+                "fix" => "MAIL",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => $nro_turno_rto
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+        $nuevoToken=$this->obtenerToken();
+
+        if($nuevoToken["status"]=='failed'){
+
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al obtener token previo a confirmar el turno",
+                "fix" => "CONFIRM",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => $nro_turno_rto
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+        try{
+
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',$data);
+
+            if( $response->getStatusCode()!=200){
+
+                $error=[
+                    "tipo" => "CRITICO",
+                    "descripcion" => "Fallo al confirmar turno al RTO",
+                    "fix" => "CONFIRM",
+                    "id_turno" => $turno->id,
+                    "nro_turno_rto" => $nro_turno_rto
+                ];
+
+                Logerror::insert($error);
+                
+            }
+
+        }catch(\Exception $e){
+
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al confirmar turno al RTO",
+                "fix" => "CONFIRM",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => $nro_turno_rto
+            ];
+
+            Logerror::insert($error);
+                
+
+        }
 
 
         $respuesta=[
