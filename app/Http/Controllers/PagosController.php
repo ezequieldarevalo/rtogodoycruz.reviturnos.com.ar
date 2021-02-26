@@ -20,7 +20,7 @@ class PagosController extends Controller
 {
 
 
-    // funcion que busca el token en la tabla, luego si esta vencido obtiene otro y lo guarda
+        // funcion que busca el token en la tabla, luego si esta vencido obtiene otro y lo guarda
     public function obtenerToken(){
         
         
@@ -91,6 +91,7 @@ class PagosController extends Controller
         }
 
     }
+    
 
 
     public function notification(Request $request){
@@ -162,10 +163,10 @@ class PagosController extends Controller
         /////////////////////////////////////////////////////////////////////
         
         // url produccion
-        //$url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
+        //$url_request='https://api.yacare.com/v1/operations-managment/operations';
 
         // url desarrollo
-        $url_request='https://core.demo.yacare.com/api-homologacion/v1/operations-managment/payments';
+        $url_request='https://core.demo.yacare.com/api-homologacion/v1/operations-managment/operations';
         
         // token yacare produccion
         // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDU5IiwiaWF0IjoxNjEzNjY5OTA2LCJleHAiOjE2NDUyMjY4NTgsIk9JRCI6NDQ1OSwiVElEIjoiWUFDQVJFX0FQSSJ9.8vVyQ9Eh4f5-IqScABBb6mTYeHiva7cUbD2ZMnfdZSvk4SjPrroI60uZbfInhoEXfUrzP8l-CYwtX4iEFS8e0g';
@@ -234,7 +235,7 @@ class PagosController extends Controller
 
         // SI ESTA PAGA CAMBIO ESTADO DEL TURNO A PAGADO Y REGISTRO EL COBRO EN LA TABLA
         /////////////////////////////////////////////////////////////////////
-        if($datos_pago["status"]["description"]=="paid"){
+        if($datos_pago["status"]["id"]=="P"){
 
 
             
@@ -365,7 +366,7 @@ class PagosController extends Controller
 
         // SI ESTA EXPIRADA ENTONCES DISPONIBILIZO EL TURNO Y BORRO DATOS
         /////////////////////////////////////////////////////////////////////
-        if($datos_pago["status"]["description"]=="expired"){
+        if(($datos_pago["status"]["id"]=="E")||($datos_pago["status"]["id"]=="R")){
 
             // DISPONIBILIZO EL TURNO
             $data=[
@@ -415,34 +416,6 @@ class PagosController extends Controller
 
         }
 
-
-        // SI ESTA REVERTIDA LA REGISTRO
-        /////////////////////////////////////////////////////////////////////
-        if($datos_pago["status"]["description"]=="reverted"){
-
-            // REVIERTO PAGO DEL TURNO
-            $res_revertir=Turno::where('id',$turno->id)->update(array('estado' => "F"));
-            if(!$res_revertir){
-                $error=[
-                        "tipo" => "CRITICO",
-                        "descripcion" => "No se pudo revertir el turno/pago",
-                        "fix" => "REVISAR",
-                        "id_turno" => $turno->id,
-                        "nro_turno_rto" => $datos_turno->nro_turno_rto,
-                        "servicio" => "notification"
-                    ];
-
-                Logerror::insert($error);
-            }
-
-            $respuesta=[
-                'status' => 'OK'
-            ];
-                    
-            return response()->json($respuesta,200);
-
-        }
-
     
         $respuesta=[
                 'status' => 'OK'
@@ -456,7 +429,7 @@ class PagosController extends Controller
 
 
 
-    
+
 
 
 
