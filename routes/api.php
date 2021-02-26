@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SimulacionController;
 use App\Http\Controllers\ApiturnoController;
+use App\Http\Controllers\PagosController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,7 @@ Route::group([
     Route::post('signup', [AuthController::class, 'signUp']);
     Route::post('solTur', [ApiturnoController::class, 'solicitarTurno']);
     Route::post('valTur', [ApiturnoController::class, 'validarTurno']);
+    Route::post('notif', [PagosController::class, 'notification']);
 
     Route::group([
       'middleware' => 'auth:api'

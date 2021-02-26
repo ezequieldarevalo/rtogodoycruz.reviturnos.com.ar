@@ -92,6 +92,17 @@ class CargaInicial extends Command
         // para la planta correspondiente
         $maximo=$config->cant_dias_disponibles-3;
 
+        // obtengo el ultimo dia de turnos dado
+        $res_ultimo_dia=Turno::where('origen',"T")->orderByDesc('fecha')->first();
+
+        if($res_ultimo_dia){
+            $ultimo_dia_turnos=$res_ultimo_dia->fecha;
+        }else{
+            $ultimo_dia_turnos=date("Y-m-d",strtotime($fecha_proceso."- 1 days"));
+        }
+
+        // echo $ultimo_dia_turnos;
+
         for($i=0;$i<=$maximo;$i++){
         
             $dia_semana=date('w',strtotime($fecha_proceso));
@@ -102,20 +113,24 @@ class CargaInicial extends Command
                 ;
             }else{
 
-                echo "Dia semana: ".$dia_semana."\n";
-				if(in_array($dia_semana, $dias_fds)){
+                if($fecha_proceso>$ultimo_dia_turnos){
+                    echo "Dia semana: ".$dia_semana."\n";
+                    if(in_array($dia_semana, $dias_fds)){
 
-					array_push($dias_laborales_fds,$fecha_proceso);
-				}else{
-					array_push($dias_laborales,$fecha_proceso);
-				}
+                        array_push($dias_laborales_fds,$fecha_proceso);
+                    }else{
+                        array_push($dias_laborales,$fecha_proceso);
+                    }
+                }
+
+
             }
 
             $fecha_proceso=date("Y-m-d",strtotime($fecha_proceso."+ 1 days"));
 
         }
 
-        var_dump($dias_laborales_fds);
+        // var_dump($dias_laborales_fds);
 
         $lineas=Linea::get();
 
@@ -152,11 +167,11 @@ class CargaInicial extends Command
 			$this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1_fds,"T",$dia,$linea->desde_franja_1_fds,$linea->hasta_franja_1_fds);
 			// $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_1,$linea->hasta_franja_1);
 					
-			if($linea->cant_franjas==2){
+			// if($linea->cant_franjas==2){
 
-				$this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1_fds,"T",$dia,$linea->desde_franja_2_fds,$linea->hasta_franja_2_fds);
-				// $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_2,$linea->hasta_franja_2);
-			}
+			// 	$this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1_fds,"T",$dia,$linea->desde_franja_2_fds,$linea->hasta_franja_2_fds);
+			// 	// $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_2,$linea->hasta_franja_2);
+			// }
 			
 		}else{    
 			$this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1,"T",$dia,$linea->desde_franja_1,$linea->hasta_franja_1);
@@ -199,7 +214,8 @@ class CargaInicial extends Command
                     'estado' => "D",
                     'origen' => $origen,
                     'observaciones' => "Proceso diario",
-                    'id_linea' => $idLinea
+                    'id_linea' => $idLinea,
+                    'id_cobro_yac' => ""
             ));
             $minTurno=$minTurno+$frecuencia;
         }

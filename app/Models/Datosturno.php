@@ -12,7 +12,14 @@ class Datosturno extends Model
     	"nombre",
     	"dominio",
     	"email",
-    	"id_turno"
+        "tipo_vehiculo",
+        "marca",
+        "modelo",
+        "anio",
+        "combustible",
+        "inscr_mendoza",
+    	"id_turno",
+        "nro_turno_rto"
     ];
 
     public function turno(){

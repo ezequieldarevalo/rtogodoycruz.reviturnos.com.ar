@@ -13,7 +13,8 @@ class Logerror extends Model
         "descripcion",
         "fix",
     	"id_turno",
-    	"nro_turno_rto"
+    	"nro_turno_rto",
+        "servicio"
     ];
 
     

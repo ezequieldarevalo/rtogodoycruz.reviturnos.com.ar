@@ -23,8 +23,7 @@ use Illuminate\Support\Facades\Mail;
 class ApiturnoController extends Controller
 {
 
-
-    // funcion que busca el token en la tabla, luego si esta vencido obtiene otro y lo guarda
+        // funcion que busca el token en la tabla, luego si esta vencido obtiene otro y lo guarda
     public function obtenerToken(){
         
         
@@ -95,24 +94,6 @@ class ApiturnoController extends Controller
         }
 
     }
-
- 
-
-    public function pendiente($id){
-        $turno=Turno::where('id',$id)->update(array('estado' => "P"));
-
-    }
-
-    public function confirmar($id){
-        $turno=Turno::where('id',$id)->update(array('estado' => "C"));
-
-    }
-
-    public function disponibilizar($id){
-        $turno=Turno::where('id',$id)->update(array('estado' => "D"));
-
-    }
-
 
     public function validarTurno(Request $request){
 
@@ -200,6 +181,7 @@ class ApiturnoController extends Controller
         // si el status code es 200 y el status es success obtengo los datos del turno
         $datos_turno=$response["turno"];
 
+        // valido que el turno este pendiente
         if($datos_turno["estado"]!="PENDIENTE"){
             $respuestaError=[
                 'status' => 'failed',
@@ -208,13 +190,12 @@ class ApiturnoController extends Controller
             return response()->json($respuestaError,400);
         }
 
-
         $vehiculo=Precio::where('descripcion',$datos_turno["tipo_de_vehiculo"])->first();
 
         if(!$vehiculo){
             $respuestaError=[
                 'status' => 'failed',
-                'message' => "Tipo de vehiculo no valido."
+                'message' => 'Tipo de vehiculo no valido.'
             ];
 
             return response()->json($respuestaError,400);
@@ -299,9 +280,6 @@ class ApiturnoController extends Controller
             return response()->json($respuestaError,400);
         }
 
-        
-
-
         $data=[
             'turno' => $nro_turno_rto
         ];
@@ -320,8 +298,6 @@ class ApiturnoController extends Controller
             return response()->json($respuestaError,400);
 
         }
-
-        
 
 
         if( $response->getStatusCode()!=200){
@@ -346,9 +322,9 @@ class ApiturnoController extends Controller
             }
         }
 
+
         $datos_turno=$response["turno"];
 
-       
 
         if($datos_turno["email"]!=$email_solicitud){
             $respuestaError=[
@@ -363,19 +339,27 @@ class ApiturnoController extends Controller
         $datosturnos=Datosturno::where('dominio',$datos_turno["patente"])->get();
         
         foreach($datosturnos as $datosturno){
-            if($datosturno->turno->estado=="P"){
+            if($datosturno->turno->estado=="R"){
                 $respuesta=[
                     'status' => 'failed',
-                    'mensaje' => "Existe otro turno activo para el dominio indicado"
+                    'mensaje' => "Existe un turno reservado pero no confirmado para su dominio."
                 ];      
                 return response()->json($respuesta,400);
             }
+            
         }
 
          
+        $turno=Turno::where('id',$id_turno)->first();
 
-
-        $turno=Turno::find($id_turno);
+        if(!$turno){
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => 'El turno no existe'
+            ];
+            return response()->json($respuestaError,400);
+        }
+        
 
         if($turno->estado!="D"){
            
@@ -435,9 +419,7 @@ class ApiturnoController extends Controller
         $fecha_vencimiento=date("d-m-Y",strtotime($dia_actual."+ 2 days"));
 
 
-        
-
-
+    
         // $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
         $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
             
@@ -448,50 +430,80 @@ class ApiturnoController extends Controller
         
         $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
 
-        $referencia='prueba2'.$id_turno;
-        $datos_post='{
-            "buyer": {
-                "email": "'.$email_solicitud.'",
-                "name": "'.$nombre_completo.'",
-                "surname": ""
-            },
-            "expirationTime": 28800,
-            "items": [
-                {
-                "name": "Turno RTO Rivadavia",
-                "quantity": "1",
-                "unitPrice": "'.$precio_float.'"
-                }
-            ],
-            "notificationURL": "https://acaretorno.com",
-            "redirectURL": "https://notificaciones.com",
-            "reference": "'.$referencia.'"
-            }
-        ';
-            
-        $response=$this->sendRequest($url_request,$token_request,$datos_post);
-            
-        if($response["status"]=="ERR"){
+        $referencia='pruebas'.$id_turno;
 
-            $respuesta=[
-                'status' => 'failed',
-                'mensaje' => $response["mensaje"]
+
+        $datos_post=[
+            "buyer" => [
+                "email" => $email_solicitud,
+                "name" => $nombre_completo,
+                "surname" => ""
+            ],
+            "expirationTime" => 15,
+            "items" => [
+                [
+                "name" => "Turno RTO San Martin Mendoza",
+                "quantity" => "1",
+                "unitPrice" => $precio_float
+                ]
+            ],
+            "notificationURL" => "http://lhdesarrollo.reviturnos.com.ar/api/auth/notif",
+            "redirectURL" => "https://notificaciones.com",
+            "reference" => $referencia
+        ];
+            
+        
+        $headers_yacare=[
+            'Authorization' => $token_request
+        ];
+
+        try{
+            
+            $response = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
+
+        }catch(\Exception $e){
+
+            $error=[
+                "tipo" => "YACARE",
+                "descripcion" => "Fallo la solicitud de pago",
+                "fix" => "NA",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => $nro_turno_rto
             ];
 
-            return response()->json($respuesta,400);
+            Logerror::insert($error);
 
-        }else{
-
-            $response_js=$response["resultado"];
-            $id_cobro=$response_js->paymentOrderUUID;
         }
 
+        if( $response->getStatusCode()!=200){
 
-        // actualizo el estado del turno a pendiente
-        $this->pendiente($turno->id);
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => 'Fallo la solicitud de pago'
+            ];
+            return response()->json($respuestaError,400);
+            
+        }
+
+        $id_cobro=$response["paymentOrderUUID"];
+
+
+        // ACTUALIZO EL ESTADO DEL TURNO A RESERVADO
+        $data_reserva=[
+            'estado' => "R",
+            'id_cobro_yac' => $id_cobro
+        ];
+        $res_reservar=Turno::where('id',$turno->id)->update($data_reserva);
+        if(!$res_reservar){
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => 'Fallo al realizar la reserva'
+            ];
+            return response()->json($respuestaError,400);
+        }
 
         // alta en tabla datos_turno
-        Datosturno::insert(array(
+        $res_guardar_datos=Datosturno::insert(array(
                 'nombre' => $nombre_completo,
                 'dominio' => $datos_turno["patente"],
                 'email' => $email_solicitud,
@@ -502,25 +514,30 @@ class ApiturnoController extends Controller
                 'combustible' => $datos_turno["combustible"],
                 'inscr_mendoza' => $datos_turno["inscripto_en_mendoza"],
                 'id_turno' => $turno->id,
-                'nro_turno_rto' => $nro_turno_rto,
+                'nro_turno_rto' => $nro_turno_rto
         ));
 
-        // alta en tabla cobros
-        Cobro::insert(array(
-                'fecha_cobro' => date("Y-m-d"),
-                'monto' => $precio_float,
-                'metodo' => "W",
-                'descripcion' => "Pagos 360",
-                'id_turno' => $turno->id,
-                "id_cobro" => $id_cobro
-        ));
+        if(!$res_guardar_datos){
 
-        
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo el alta de los datos del turno.",
+                "fix" => "REVISAR",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => $nro_turno_rto,
+                "servicio" => "solicitarTurno"
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+
         $datos_mail=new TurnoRto;
         $datos_mail->id=$turno->id;
         $datos_mail->fecha=$turno->fecha;
         $datos_mail->hora=$turno->hora;
-        $datos_mail->url_pago=$response_js->paymentURL;
+        $datos_mail->url_pago=$response["paymentURL"];
         $datos_mail->dominio=$datos_turno["patente"];
         $datos_mail->nombre=$nombre_completo;
 
@@ -536,152 +553,58 @@ class ApiturnoController extends Controller
                 "descripcion" => "Fallo al enviar datos del turno al cliente",
                 "fix" => "MAIL",
                 "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto
+                "nro_turno_rto" => $nro_turno_rto,
+                "servicio" => "solicitarTurno"
             ];
 
             Logerror::insert($error);
 
         }
 
-        // $nuevoToken=$this->obtenerToken();
-
-        // if($nuevoToken["status"]=='failed'){
-
-        //     $error=[
-        //         "tipo" => "CRITICO",
-        //         "descripcion" => "Fallo al obtener token previo a confirmar el turno",
-        //         "fix" => "CONFIRM",
-        //         "id_turno" => $turno->id,
-        //         "nro_turno_rto" => $nro_turno_rto
-        //     ];
-
-        //     Logerror::insert($error);
-
-        // }
-
-        // try{
-
-        //     $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',$data);
-
-        //     if( $response->getStatusCode()!=200){
-
-        //         $error=[
-        //             "tipo" => "CRITICO",
-        //             "descripcion" => "Fallo al confirmar turno al RTO",
-        //             "fix" => "CONFIRM",
-        //             "id_turno" => $turno->id,
-        //             "nro_turno_rto" => $nro_turno_rto
-        //         ];
-
-        //         Logerror::insert($error);
-                
-        //     }
-
-        // }catch(\Exception $e){
-
-        //     $error=[
-        //         "tipo" => "CRITICO",
-        //         "descripcion" => "Fallo al confirmar turno al RTO",
-        //         "fix" => "CONFIRM",
-        //         "id_turno" => $turno->id,
-        //         "nro_turno_rto" => $nro_turno_rto
-        //     ];
-
-        //     Logerror::insert($error);
-                
-
-        // }
-
 
         $respuesta=[
                 'status' => 'OK',
-                'url_pago' => $response_js->paymentURL
+                'url_pago' => $response["paymentURL"]
             ];
 
         return response()->json($respuesta,200);
 
     }
 
-    public function sendRequest($url,$token,$datos_post){
+    
+    
+
+
+
+    // public function reservar($id){
+    //     $turno=Turno::where('id',$id)->update(array('estado' => "R"));
+
+    // }
+
+    // public function confirmar($id){
+    //     $turno=Turno::where('id',$id)->update(array('estado' => "C"));
+
+    // }
+
+    // public function pagar($id){
+    //     $turno=Turno::where('id',$id)->update(array('estado' => "P"));
+
+    // }
+
+    // public function revertir($id){
+    //     $turno=Turno::where('id',$id)->update(array('estado' => "F"));
+
+    // }
+
+    // public function disponibilizar($id){
         
-        $ch = curl_init();
+    //     $data=[
+    //         'estado' => "D",
+    //         'id_cobro' => ""
+    //     ];
+    //     $turno=Turno::where('id',$id)->update($data);
 
-        curl_setopt_array($ch, array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => $datos_post,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Authorization: '.$token)
-            ),
-        );
-
-        $response = curl_exec($ch);
-        
-        if (empty($response)) {
-            
-            curl_close($ch); // close cURL handler
-
-            $respuesta=[
-                'status' => 'ERR',
-                'mensaje' => 'La plataforma de pagos no responde'
-            ];
-
-            return -1;
-
-        } else {
-
-            $info = curl_getinfo($ch);
-
-            if (empty($info['http_code'])) {
-
-                curl_close($ch);
-
-                $respuesta=[
-                    'status' => 'ERR',
-                    'mensaje' => 'La plataforma de pagos no responde'
-                ];
-                
-                return $respuesta;
-
-            } else {
-
-                if($info['http_code']!=200){
-
-                    curl_close($ch);
-                
-                    $respuesta=[
-                        'status' => 'ERR',
-                        'mensaje' => 'La plataforma de pagos no responde'
-                    ];
-
-                    return $respuesta;
-
-                }else{
-
-                    $resultado=json_decode($response);
-
-                    $respuesta=[
-                        'status' => 'OK',
-                        'resultado' => $resultado
-                    ];
-
-                    curl_close($ch);
-
-                    return $respuesta;
-
-                }
-            }
-
-        }
-
-    }
+    // }
 
     
 

@@ -10,15 +10,16 @@ class Cobro extends Model
 	protected $table="cobros";
 
     protected $fillable=[
-    	"fecha_cobro",
+    	"fecha",
     	"monto",
     	"metodo",
-    	"descripcion",
-    	"id_turno",
-    	"id_cobro"
+    	"nro_op",
+    	"origen",
+    	"id_turno"
     ];
 
     public function turno(){
     	return $this->belongsTo('App\Models\Turno','id_turno');
     }
 }
+

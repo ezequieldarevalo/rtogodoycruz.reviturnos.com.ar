@@ -13,7 +13,7 @@ class Turno extends Model
     	"origen",
     	"observaciones",
     	"id_linea",
-    	"id_planta"
+		"id_cobro_yac"
     ];
 
     protected $table="turnos";
