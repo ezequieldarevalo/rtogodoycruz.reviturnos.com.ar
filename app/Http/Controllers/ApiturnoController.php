@@ -447,7 +447,7 @@ class ApiturnoController extends Controller
                 "unitPrice" => $precio_float
                 ]
             ],
-            "notificationURL" => "http://lhdesarrollo.reviturnos.com.ar/api/auth/notif",
+            "notificationURL" => "https://centroeste.reviturnos.com.ar/api/auth/notif",
             "redirectURL" => "https://notificaciones.com",
             "reference" => $referencia
         ];
