@@ -16,6 +16,7 @@ use Validator;
 use App\Exceptions\MyOwnException;
 use Exception;
 use Http;
+use DateTime;
 use App\Mail\TurnoRtoM;
 use SteamCondenser\Exceptions\SocketException;
 use Illuminate\Support\Facades\Mail;
@@ -219,8 +220,17 @@ class ApiturnoController extends Controller
             ['origen','=','T'],
             ['fecha','>=',$dia_actual]
         ];
+
+        $fecha_actual=new DateTime();
+
+        $conditions2=[
+            ['estado','=','R'],
+            ['origen','=','T'],
+            ['fecha','>=',$dia_actual],
+            ['vencimiento','<',$fecha_actual]            
+        ];
         
-        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->orderBy('fecha')->get();
+        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->orWhere($conditions2)->orderBy('fecha')->get();
 
         $respuestaOK=[
             'status' => 'success',
@@ -359,55 +369,69 @@ class ApiturnoController extends Controller
             ];
             return response()->json($respuestaError,400);
         }
+
+        $fecha_actual=new DateTime();
+
+        if(!($turno->estado=="D" || ($turno->estado=="R" && $turno->vencimiento<$fecha_actual))){
+	        
+            $respuestaError=[
+                        'status' => 'failed',
+                        'mensaje' => "El turno ya no se encuentra disponible. Refresque la pagina."
+                    ];
+
+            return response()->json($respuestaError,400);
+
+        }
         
 
-        if($turno->estado!="D"){
+
+        // if($turno->estado!="D"){
            
-            $conditions=[
-                "tipo_vehiculo" => $turno->linea->tipo_vehiculo
-            ];
+        //     $conditions=[
+        //         "tipo_vehiculo" => $turno->linea->tipo_vehiculo
+        //     ];
 
 
-            $lineas = Linea::where($conditions)->get();
+        //     $lineas = Linea::where($conditions)->get();
 
-            if (count($lineas)>0){
+        //     if (count($lineas)>0){
 
-                $listado_lineas=array();
-                foreach($lineas as $linea){
-                    array_push($listado_lineas,$linea->id);
-                }
+        //         $listado_lineas=array();
+        //         foreach($lineas as $linea){
+        //             array_push($listado_lineas,$linea->id);
+        //         }
 
-                $conditions2=[
-                    "fecha" => $turno->fecha,
-                    "hora" => $turno->hora,
-                    "estado" => "D"
-                ];
+        //         $conditions2=[
+        //             "fecha" => $turno->fecha,
+        //             "hora" => $turno->hora,
+        //             "estado" => "D"
+        //         ];
                 
-                $posibles_turnos=Turno::where($conditions2)->whereIn('id_linea',$listado_lineas)->get();
+        //         $posibles_turnos=Turno::where($conditions2)->whereIn('id_linea',$listado_lineas)->get();
 
                 
-                if (count($posibles_turnos)>0){
-                    $turno=$posibles_turnos->first();
-                }else{
+        //         if (count($posibles_turnos)>0){
+        //             $turno=$posibles_turnos->first();
+        //         }else{
                     
-                    $respuesta=[
-                        'status' => 'failed',
-                        'mensaje' => "El turno ya no se encuentra disponible"
-                    ];
+        //             $respuesta=[
+        //                 'status' => 'failed',
+        //                 'mensaje' => "El turno ya no se encuentra disponible"
+        //             ];
                     
-                    return $respuesta;
-                }
+        //             return $respuesta;
+        //         }
 
-            }else{
+        //     }else{
                 
-                $respuesta=[
-                        'status' => 'failed',
-                        'mensaje' => "No se encontraron lineas para la planta y el vehiculo ingresados"
-                    ];
-                return $respuesta;
-            }
+        //         $respuesta=[
+        //                 'status' => 'failed',
+        //                 'mensaje' => "No se encontraron lineas para la planta y el vehiculo ingresados"
+        //             ];
+        //         return $respuesta;
+        //     }
 
-        } // fin turno no disponible
+        // } // fin turno no disponible
 
 
         $fecha=getDate();
@@ -416,7 +440,10 @@ class ApiturnoController extends Controller
 
         $vehiculo=Precio::where('descripcion',$tipo_vehiculo)->first();
         $precio_float=$vehiculo->precio.'.00';
-        $fecha_vencimiento=date("d-m-Y",strtotime($dia_actual."+ 2 days"));
+        // $fecha_vencimiento=date("d-m-Y",strtotime($dia_actual."+ 12 hours"));
+
+        
+        $fecha_vencimiento=$fecha_actual->modify('+12 hours');
 
 
     
@@ -430,7 +457,7 @@ class ApiturnoController extends Controller
         
         $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
 
-        $referencia='pruebas'.$id_turno;
+        $referencia=$id_turno.$fecha_actual->format('dmYHis');
 
 
         $datos_post=[
@@ -439,7 +466,7 @@ class ApiturnoController extends Controller
                 "name" => $nombre_completo,
                 "surname" => ""
             ],
-            "expirationTime" => 15,
+            "expirationTime" => 600,
             "items" => [
                 [
                 "name" => "Turno RTO San Martin Mendoza",
@@ -447,7 +474,7 @@ class ApiturnoController extends Controller
                 "unitPrice" => $precio_float
                 ]
             ],
-            "notificationURL" => "https://centroeste.reviturnos.com.ar/api/auth/notif",
+            "notificationURL" => "https://lhrevitotal.reviturnos.com.ar/api/auth/notif",
             "redirectURL" => "https://notificaciones.com",
             "reference" => $referencia
         ];
@@ -488,9 +515,11 @@ class ApiturnoController extends Controller
         $id_cobro=$response["paymentOrderUUID"];
 
 
+        
         // ACTUALIZO EL ESTADO DEL TURNO A RESERVADO
         $data_reserva=[
             'estado' => "R",
+            'vencimiento' => $fecha_vencimiento,
             'id_cobro_yac' => $id_cobro
         ];
         $res_reservar=Turno::where('id',$turno->id)->update($data_reserva);
@@ -502,35 +531,61 @@ class ApiturnoController extends Controller
             return response()->json($respuestaError,400);
         }
 
-        // alta en tabla datos_turno
-        $res_guardar_datos=Datosturno::insert(array(
-                'nombre' => $nombre_completo,
-                'dominio' => $datos_turno["patente"],
-                'email' => $email_solicitud,
-                'tipo_vehiculo' => $datos_turno["tipo_de_vehiculo"],
-                'marca' => $datos_turno["marca"],
-                'modelo' => $datos_turno["modelo"],
-                'anio' => $datos_turno["anio"],
-                'combustible' => $datos_turno["combustible"],
-                'inscr_mendoza' => $datos_turno["inscripto_en_mendoza"],
-                'id_turno' => $turno->id,
-                'nro_turno_rto' => $nro_turno_rto
-        ));
+        $aux_carga_datos_turno=[
+            'nombre' => $nombre_completo,
+            'dominio' => $datos_turno["patente"],
+            'email' => $email_solicitud,
+            'tipo_vehiculo' => $datos_turno["tipo_de_vehiculo"],
+            'marca' => $datos_turno["marca"],
+            'modelo' => $datos_turno["modelo"],
+            'anio' => $datos_turno["anio"],
+            'combustible' => $datos_turno["combustible"],
+            'inscr_mendoza' => $datos_turno["inscripto_en_mendoza"],
+            'id_turno' => $turno->id,
+            'nro_turno_rto' => $nro_turno_rto
+        ];
 
-        if(!$res_guardar_datos){
+        if($turno->estado=="D"){
 
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo el alta de los datos del turno.",
-                "fix" => "REVISAR",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto,
-                "servicio" => "solicitarTurno"
-            ];
+            $res_guardar_datos=Datosturno::insert($aux_carga_datos_turno);
 
-            Logerror::insert($error);
+            if(!$res_guardar_datos){
 
+                $error=[
+                    "tipo" => "CRITICO",
+                    "descripcion" => "Fallo el alta de los datos del turno.",
+                    "fix" => "REVISAR",
+                    "id_turno" => $turno->id,
+                    "nro_turno_rto" => $nro_turno_rto,
+                    "servicio" => "solicitarTurno"
+                ];
+
+                Logerror::insert($error);
+
+            }
+
+        }else{
+            // voy a tener que hacer update del registro
+            $res_actualizar_datos=Datosturno::where('id_turno',$turno->id)->update($aux_carga_datos_turno);
+
+            if(!$res_actualizar_datos){
+
+                $error=[
+                    "tipo" => "CRITICO",
+                    "descripcion" => "Fallo el update de los datos del turno.",
+                    "fix" => "REVISAR",
+                    "id_turno" => $turno->id,
+                    "nro_turno_rto" => $nro_turno_rto,
+                    "servicio" => "solicitarTurno"
+                ];
+
+                Logerror::insert($error);
+
+            }
         }
+
+        // alta en tabla datos_turno
+        
 
 
         $datos_mail=new TurnoRto;

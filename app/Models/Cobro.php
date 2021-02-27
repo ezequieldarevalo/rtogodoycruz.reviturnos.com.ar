@@ -15,7 +15,8 @@ class Cobro extends Model
     	"metodo",
     	"nro_op",
     	"origen",
-    	"id_turno"
+    	"id_turno",
+		"id_cobro"
     ];
 
     public function turno(){

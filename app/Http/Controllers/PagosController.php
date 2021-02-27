@@ -124,6 +124,18 @@ class PagosController extends Controller
             return response()->json($respuesta,400);
         }
 
+
+        $error=[
+                "tipo" => "NOTIF YAC",
+                "descripcion" => "Llego notificacion con id: ".$request->input("id"),
+                "fix" => "GETSTATE",
+                "id_turno" => 0,
+                "nro_turno_rto" => "",
+                "servicio" => "notification"
+            ];
+
+        Logerror::insert($error);
+
         
         // ALMACENO EL INPUT EN LA VARIABLE ID_COBRO
         ///////////////////////
@@ -157,6 +169,17 @@ class PagosController extends Controller
             return response()->json($respuesta,200);
         }
 
+        $error=[
+                "tipo" => "NOTIF YAC",
+                "descripcion" => "Obtuve id de turno desde el id de pago :".$request->input("id"),
+                "fix" => "GETSTATE",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => "",
+                "servicio" => "notification"
+            ];
+
+        Logerror::insert($error);
+
 
         /////////////////////////////////////////////////////////////////////
         // CONSULTO A YACARE LOS DATOS DEL PAGO
@@ -166,7 +189,7 @@ class PagosController extends Controller
         //$url_request='https://api.yacare.com/v1/operations-managment/operations';
 
         // url desarrollo
-        $url_request='https://core.demo.yacare.com/api-homologacion/v1/operations-managment/operations';
+        $url_request='https://core.demo.yacare.com/api-homologacion/v1/operations-managment/operations?transaction='.$id_cobro;
         
         // token yacare produccion
         // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDU5IiwiaWF0IjoxNjEzNjY5OTA2LCJleHAiOjE2NDUyMjY4NTgsIk9JRCI6NDQ1OSwiVElEIjoiWUFDQVJFX0FQSSJ9.8vVyQ9Eh4f5-IqScABBb6mTYeHiva7cUbD2ZMnfdZSvk4SjPrroI60uZbfInhoEXfUrzP8l-CYwtX4iEFS8e0g';
@@ -181,7 +204,7 @@ class PagosController extends Controller
 
         try{
             
-            $response = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
+            $response = Http::withHeaders($headers_yacare)->get($url_request);
 
         }catch(\Exception $e){
 
@@ -203,10 +226,21 @@ class PagosController extends Controller
             return response()->json($respuesta,200);
         }
 
+        $error=[
+                "tipo" => "NOTIF YAC",
+                "descripcion" => "Consulte estado de un pago, el resultado fue: ".$response->status(),
+                "fix" => "GETSTATE",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => "",
+                "servicio" => "notification"
+            ];
+
+        Logerror::insert($error);
+
 
         // SI YACARE DA ERROR ENTONCES LO REGISTRO
         /////////////////////////////////////////////////////////////////////
-        if( $response->getStatusCode()!=200){
+        if( $response->status()!=200){
 
             $error=[
                 "tipo" => "YACARE",
@@ -230,13 +264,28 @@ class PagosController extends Controller
 
         // ALMACENO DATOS DEL PAGO EN LA VARIABLE CORRESPONDIENTE
         /////////////////////////////////////////////////////////////////////
-        $datos_pago=$response;
+        $datos_pago=$response[0];
+
+        
+
+        $error=[
+            "tipo" => "AAAAAAA",
+            "descripcion" => "Pruebo obtener status: ".$datos_pago["status"]["id"],
+            "fix" => "REVISAR",
+            "id_turno" => $turno->id,
+            "nro_turno_rto" => "",
+            "servicio" => "notification"
+        ];
+
+        Logerror::insert($error);
 
 
         // SI ESTA PAGA CAMBIO ESTADO DEL TURNO A PAGADO Y REGISTRO EL COBRO EN LA TABLA
         /////////////////////////////////////////////////////////////////////
         if($datos_pago["status"]["id"]=="P"){
 
+
+            $listado_intentos=$datos_pago["payments"];
 
             
             // OBTENGO ID DEL TURNO EN LA RTO PARA CONFIRMAR A RTO MENDOZA
@@ -267,7 +316,7 @@ class PagosController extends Controller
                         "descripcion" => "Fallo al obtener token previo a confirmar el turno",
                         "fix" => "CONFIRM",
                         "id_turno" => $turno->id,
-                        "nro_turno_rto" => $datos_turno->nro_turno_rto,
+                        "nro_turno_rto" => "",
                         "servicio" => "notification"
                     ];
 
@@ -277,7 +326,7 @@ class PagosController extends Controller
 
                 try{
 
-                    $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',$data);
+                    $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',array('turno' => $datos_turno->nro_turno_rto));
 
                     if( $response->getStatusCode()!=200){
 
@@ -329,31 +378,47 @@ class PagosController extends Controller
                 Logerror::insert($error);
 
             }
+
             
-            // REGISTRO EL PAGO/COBRO
-            $res_cobro=Cobro::insert(array(
-                'fecha' => $datos_pago["date"],
-                'monto' => $datos_pago["amount"],
-                'metodo' => $datos_pago["method"],
-                'nro_op' => $datos_pago["operationNumber"],
-                'origen' => "Yacare",
-                'id_turno' => $turno->id
-            ));
-
-            if(!$res_cobro){
+            foreach($listado_intentos as $pago){
                 
-                $error=[
-                        "tipo" => "CRITICO",
-                        "descripcion" => "El cobro no pudo registrarse",
-                        "fix" => "REVISAR",
-                        "id_turno" => $turno->id,
-                        "nro_turno_rto" => $datos_turno->nro_turno_rto,
-                        "servicio" => "notification"
-                    ];
 
-                Logerror::insert($error);
+                // si el pago esta aprobado
+                if($pago["status"]["id"]=="A"){
+                    
+                    // REGISTRO EL PAGO/COBRO
+                    $res_cobro=Cobro::insert(array(
+                        'fecha' => $pago["date"],
+                        'monto' => $datos_pago["amount"],
+                        'metodo' => $pago["type"],
+                        'nro_op' => $pago["transactionId"],
+                        'origen' => "Yacare",
+                        'id_turno' => $turno->id,
+                        'id_cobro' => $id_cobro
+                    ));
+
+                    if(!$res_cobro){
+                        
+                        $error=[
+                                "tipo" => "CRITICO",
+                                "descripcion" => "El cobro no pudo registrarse",
+                                "fix" => "REVISAR",
+                                "id_turno" => $turno->id,
+                                "nro_turno_rto" => $datos_turno->nro_turno_rto,
+                                "servicio" => "notification"
+                            ];
+
+                        Logerror::insert($error);
+
+                    }
+
+                    break;
+
+                }
 
             }
+            
+
 
             $respuesta=[
                 'status' => 'OK'
@@ -362,59 +427,60 @@ class PagosController extends Controller
             return response()->json($respuesta,200);
 
         }
+
 
 
         // SI ESTA EXPIRADA ENTONCES DISPONIBILIZO EL TURNO Y BORRO DATOS
         /////////////////////////////////////////////////////////////////////
-        if(($datos_pago["status"]["id"]=="E")||($datos_pago["status"]["id"]=="R")){
+        // if($datos_pago["status"]["id"]=="R"){
 
-            // DISPONIBILIZO EL TURNO
-            $data=[
-                'estado' => "D",
-                'id_cobro' => ""
-            ];
-            $res_disponibilizar=Turno::where('id',$turno->id)->update($data);
+        //     // DISPONIBILIZO EL TURNO
+        //     $data=[
+        //         'estado' => "D",
+        //         'id_cobro_yac' => ""
+        //     ];
+        //     $res_disponibilizar=Turno::where('id',$turno->id)->update($data);
 
-            if(!$res_disponibilizar){
+        //     if(!$res_disponibilizar){
                 
-                $error=[
-                        "tipo" => "CRITICO",
-                        "descripcion" => "No se pudo disponibilizar el turno",
-                        "fix" => "REVISAR",
-                        "id_turno" => $turno->id,
-                        "nro_turno_rto" => $datos_turno->nro_turno_rto,
-                        "servicio" => "notification"
-                    ];
+        //         $error=[
+        //                 "tipo" => "CRITICO",
+        //                 "descripcion" => "No se pudo disponibilizar el turno",
+        //                 "fix" => "REVISAR",
+        //                 "id_turno" => $turno->id,
+        //                 "nro_turno_rto" => $datos_turno->nro_turno_rto,
+        //                 "servicio" => "notification"
+        //             ];
 
-                Logerror::insert($error);
+        //         Logerror::insert($error);
 
-            }
+        //     }
             
-            // ELIMINO EL REGISTRO DE LOS DATOS
-            $borrar_datos_tabla=Datosturno::where('id',$turno->id)->delete();
+        //     // ELIMINO EL REGISTRO DE LOS DATOS
+        //     $borrar_datos_tabla=Datosturno::where('id_turno',$turno->id)->delete();
             
-            if(!$borrar_datos_tabla){
+        //     if(!$borrar_datos_tabla){
                 
-                $error=[
-                        "tipo" => "CRITICO",
-                        "descripcion" => "No se han podido borrar los datos de un turno disponibilizado",
-                        "fix" => "REVISAR",
-                        "id_turno" => $turno->id,
-                        "nro_turno_rto" => $datos_turno->nro_turno_rto,
-                        "servicio" => "notification"
-                    ];
+        //         $error=[
+        //                 "tipo" => "CRITICO",
+        //                 "descripcion" => "No se han podido borrar los datos de un turno disponibilizado",
+        //                 "fix" => "REVISAR",
+        //                 "id_turno" => $turno->id,
+        //                 "nro_turno_rto" => $datos_turno->nro_turno_rto,
+        //                 "servicio" => "notification"
+        //             ];
 
-                Logerror::insert($error);
+        //         Logerror::insert($error);
 
-            }
+        //     }
 
-            $respuesta=[
-                'status' => 'OK'
-            ];
+        //     $respuesta=[
+        //         'status' => 'OK'
+        //     ];
                     
-            return response()->json($respuesta,200);
+        //     return response()->json($respuesta,200);
 
-        }
+        // }
 
     
         $respuesta=[
