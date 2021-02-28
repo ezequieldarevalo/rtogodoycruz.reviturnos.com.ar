@@ -344,6 +344,15 @@ class ApiturnoController extends Controller
             return response()->json($respuestaError,400);
         }
 
+         // valido que el turno este pendiente
+        if($datos_turno["estado"]!="PENDIENTE"){
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => 'Su turno no se encuentra activo.'
+            ];
+            return response()->json($respuestaError,400);
+        }
+
 
         // valido que el dominio no tenga otro turno pendiente
         $datosturnos=Datosturno::where('dominio',$datos_turno["patente"])->get();
@@ -457,52 +466,52 @@ class ApiturnoController extends Controller
         
         $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
 
-        $referencia=$id_turno.$fecha_actual->format('dmYHis');
+        // $referencia=$id_turno.$fecha_actual->format('dmYHis');
 
 
-        $datos_post=[
-            "buyer" => [
-                "email" => $email_solicitud,
-                "name" => $nombre_completo,
-                "surname" => ""
-            ],
-            "expirationTime" => 600,
-            "items" => [
-                [
-                "name" => "Turno RTO San Martin Mendoza",
-                "quantity" => "1",
-                "unitPrice" => $precio_float
-                ]
-            ],
-            "notificationURL" => "https://centroeste.reviturnos.com.ar/api/auth/notif",
-            "redirectURL" => "https://turnos.rtorivadavia.com.ar/confirmado",
-            "reference" => $referencia
-        ];
+        // $datos_post=[
+        //     "buyer" => [
+        //         "email" => $email_solicitud,
+        //         "name" => $nombre_completo,
+        //         "surname" => ""
+        //     ],
+        //     "expirationTime" => 600,
+        //     "items" => [
+        //         [
+        //         "name" => "Turno RTO San Martin Mendoza",
+        //         "quantity" => "1",
+        //         "unitPrice" => $precio_float
+        //         ]
+        //     ],
+        //     "notificationURL" => "https://centroeste.reviturnos.com.ar/api/auth/notif",
+        //     "redirectURL" => "https://turnos.rtorivadavia.com.ar/confirmado",
+        //     "reference" => $referencia
+        // ];
 
         
             
         
-        $headers_yacare=[
-            'Authorization' => $token_request
-        ];
+        // $headers_yacare=[
+        //     'Authorization' => $token_request
+        // ];
 
-        try{
+        // try{
             
-            $response = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
+        //     $response = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
 
-        }catch(\Exception $e){
+        // }catch(\Exception $e){
 
-            $error=[
-                "tipo" => "YACARE",
-                "descripcion" => "Fallo la solicitud de pago",
-                "fix" => "NA",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto
-            ];
+        //     $error=[
+        //         "tipo" => "YACARE",
+        //         "descripcion" => "Fallo la solicitud de pago",
+        //         "fix" => "NA",
+        //         "id_turno" => $turno->id,
+        //         "nro_turno_rto" => $nro_turno_rto
+        //     ];
 
-            Logerror::insert($error);
+        //     Logerror::insert($error);
 
-        }
+        // }
 
         if( $response->getStatusCode()!=200){
 
@@ -515,16 +524,22 @@ class ApiturnoController extends Controller
         }
 
 
-        $id_cobro=$response["paymentOrderUUID"];
+        // $id_cobro=$response["paymentOrderUUID"];
+        $id_cobro="";
 
 
         
         // ACTUALIZO EL ESTADO DEL TURNO A RESERVADO
+        // $data_reserva=[
+        //     'estado' => "R",
+        //     'vencimiento' => $fecha_vencimiento,
+        //     'id_cobro_yac' => $id_cobro
+        // ];
+
         $data_reserva=[
-            'estado' => "R",
-            'vencimiento' => $fecha_vencimiento,
-            'id_cobro_yac' => $id_cobro
+            'estado' => "C"
         ];
+
         $res_reservar=Turno::where('id',$turno->id)->update($data_reserva);
         if(!$res_reservar){
             $respuestaError=[
@@ -595,7 +610,8 @@ class ApiturnoController extends Controller
         $datos_mail->id=$turno->id;
         $datos_mail->fecha=$turno->fecha;
         $datos_mail->hora=$turno->hora;
-        $datos_mail->url_pago=$response["paymentURL"];
+        // $datos_mail->url_pago=$response["paymentURL"];
+        $datos_mail->url_pago="";
         $datos_mail->dominio=$datos_turno["patente"];
         $datos_mail->nombre=$nombre_completo;
 
@@ -674,7 +690,7 @@ class ApiturnoController extends Controller
 
         $respuesta=[
                 'status' => 'OK',
-                'url_pago' => $response["paymentURL"]
+                // 'url_pago' => $response["paymentURL"]
             ];
 
         return response()->json($respuesta,200);
