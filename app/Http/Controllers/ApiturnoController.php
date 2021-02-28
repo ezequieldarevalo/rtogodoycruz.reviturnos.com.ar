@@ -475,7 +475,7 @@ class ApiturnoController extends Controller
                 ]
             ],
             "notificationURL" => "https://centroeste.reviturnos.com.ar/api/auth/notif",
-            "redirectURL" => "https://turnos.rtorivadavia.com.ar/confirmado",
+            "redirectURL" => "https://turnos.rtorivadavia.com.ar/finproceso",
             "reference" => $referencia
         ];
 
