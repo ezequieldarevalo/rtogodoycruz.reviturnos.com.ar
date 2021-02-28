@@ -456,62 +456,62 @@ class ApiturnoController extends Controller
 
 
     
-        // $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
-        $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
+        $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
+        // $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
             
         // conseguir token yacare
-        $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
+        // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
         
-        // $token_request='';
+        $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDg5IiwiaWF0IjoxNjEzNzYzNjI4LCJleHAiOjE2NDUzMjA1ODAsIk9JRCI6NDQ4OSwiVElEIjoiWUFDQVJFX0FQSSJ9.wpkLqfoHe5l6d2seKI3cvdDQj1A4-B2WXcxNC08fTC-1b_WvxONdn61TwSF2FF81X_BngS3R0gvpaw5RV6s44g';
         
         $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
 
-        // $referencia=$id_turno.$fecha_actual->format('dmYHis');
+        $referencia=$id_turno.$fecha_actual->format('dmYHis');
 
 
-        // $datos_post=[
-        //     "buyer" => [
-        //         "email" => $email_solicitud,
-        //         "name" => $nombre_completo,
-        //         "surname" => ""
-        //     ],
-        //     "expirationTime" => 600,
-        //     "items" => [
-        //         [
-        //         "name" => "Turno RTO San Martin Mendoza",
-        //         "quantity" => "1",
-        //         "unitPrice" => $precio_float
-        //         ]
-        //     ],
-        //     "notificationURL" => "https://centroeste.reviturnos.com.ar/api/auth/notif",
-        //     "redirectURL" => "https://turnos.rtorivadavia.com.ar/confirmado",
-        //     "reference" => $referencia
-        // ];
+        $datos_post=[
+            "buyer" => [
+                "email" => $email_solicitud,
+                "name" => $nombre_completo,
+                "surname" => ""
+            ],
+            "expirationTime" => 600,
+            "items" => [
+                [
+                "name" => "Turno RTO San Martin Mendoza",
+                "quantity" => "1",
+                "unitPrice" => $precio_float
+                ]
+            ],
+            "notificationURL" => "https://centroeste.reviturnos.com.ar/api/auth/notif",
+            "redirectURL" => "https://turnos.rtorivadavia.com.ar/confirmado",
+            "reference" => $referencia
+        ];
 
         
             
         
-        // $headers_yacare=[
-        //     'Authorization' => $token_request
-        // ];
+        $headers_yacare=[
+            'Authorization' => $token_request
+        ];
 
-        // try{
+        try{
             
-        //     $response = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
+            $response = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
 
-        // }catch(\Exception $e){
+        }catch(\Exception $e){
 
-        //     $error=[
-        //         "tipo" => "YACARE",
-        //         "descripcion" => "Fallo la solicitud de pago",
-        //         "fix" => "NA",
-        //         "id_turno" => $turno->id,
-        //         "nro_turno_rto" => $nro_turno_rto
-        //     ];
+            $error=[
+                "tipo" => "YACARE",
+                "descripcion" => "Fallo la solicitud de pago",
+                "fix" => "NA",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => $nro_turno_rto
+            ];
 
-        //     Logerror::insert($error);
+            Logerror::insert($error);
 
-        // }
+        }
 
         if( $response->getStatusCode()!=200){
 
@@ -524,21 +524,21 @@ class ApiturnoController extends Controller
         }
 
 
-        // $id_cobro=$response["paymentOrderUUID"];
-        $id_cobro="";
+        $id_cobro=$response["paymentOrderUUID"];
+        // $id_cobro="";
 
 
         
         // ACTUALIZO EL ESTADO DEL TURNO A RESERVADO
-        // $data_reserva=[
-        //     'estado' => "R",
-        //     'vencimiento' => $fecha_vencimiento,
-        //     'id_cobro_yac' => $id_cobro
-        // ];
-
         $data_reserva=[
-            'estado' => "C"
+            'estado' => "R",
+            'vencimiento' => $fecha_vencimiento,
+            'id_cobro_yac' => $id_cobro
         ];
+
+        // $data_reserva=[
+        //     'estado' => "C"
+        // ];
 
         $res_reservar=Turno::where('id',$turno->id)->update($data_reserva);
         if(!$res_reservar){
@@ -610,8 +610,8 @@ class ApiturnoController extends Controller
         $datos_mail->id=$turno->id;
         $datos_mail->fecha=$turno->fecha;
         $datos_mail->hora=$turno->hora;
-        // $datos_mail->url_pago=$response["paymentURL"];
-        $datos_mail->url_pago="";
+        $datos_mail->url_pago=$response["paymentURL"];
+        // $datos_mail->url_pago="";
         $datos_mail->dominio=$datos_turno["patente"];
         $datos_mail->nombre=$nombre_completo;
 
@@ -690,7 +690,7 @@ class ApiturnoController extends Controller
 
         $respuesta=[
                 'status' => 'OK',
-                // 'url_pago' => $response["paymentURL"]
+                'url_pago' => $response["paymentURL"]
             ];
 
         return response()->json($respuesta,200);
