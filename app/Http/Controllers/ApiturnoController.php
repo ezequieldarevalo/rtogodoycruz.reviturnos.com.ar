@@ -662,7 +662,7 @@ class ApiturnoController extends Controller
                 "descripcion" => "Fallo al confirmar turno al RTO",
                 "fix" => "CONFIRM",
                 "id_turno" => $turno->id,
-                "nro_turno_rto" => $datos_turno->nro_turno_rto,
+                "nro_turno_rto" => $nro_turno_rto,
                 "servicio" => "notification"
             ];
 
