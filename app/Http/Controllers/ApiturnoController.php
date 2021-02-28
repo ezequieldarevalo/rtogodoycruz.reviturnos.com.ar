@@ -75,7 +75,7 @@ class ApiturnoController extends Controller
 
                     $respuesta=[
                         'status' => 'success',
-                        'token' => $newToken["fecha_expiracion"]
+                        'token' => $newToken["token"]
                     ];
                 
                     return $respuesta;
