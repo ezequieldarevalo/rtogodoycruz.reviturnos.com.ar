@@ -307,57 +307,62 @@ class PagosController extends Controller
 
             }else{
 
-                $nuevoToken=$this->obtenerToken();
+                ///////////////////////////////////////////////////
+                ////SE CAMBIA DE LUGAR LA CONFIRMACION A LA RTO////
+                ///////////////////////////////////////////////////
 
-                if($nuevoToken["status"]=='failed'){
+                
+                // $nuevoToken=$this->obtenerToken();
 
-                    $error=[
-                        "tipo" => "CRITICO",
-                        "descripcion" => "Fallo al obtener token previo a confirmar el turno",
-                        "fix" => "CONFIRM",
-                        "id_turno" => $turno->id,
-                        "nro_turno_rto" => "",
-                        "servicio" => "notification"
-                    ];
+                // if($nuevoToken["status"]=='failed'){
 
-                    Logerror::insert($error);
+                //     $error=[
+                //         "tipo" => "CRITICO",
+                //         "descripcion" => "Fallo al obtener token previo a confirmar el turno",
+                //         "fix" => "CONFIRM",
+                //         "id_turno" => $turno->id,
+                //         "nro_turno_rto" => "",
+                //         "servicio" => "notification"
+                //     ];
 
-                }
+                //     Logerror::insert($error);
 
-                try{
+                // }
 
-                    $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',array('turno' => $datos_turno->nro_turno_rto));
+                // try{
 
-                    if( $response->getStatusCode()!=200){
+                //     $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',array('turno' => $datos_turno->nro_turno_rto));
 
-                        $error=[
-                            "tipo" => "CRITICO",
-                            "descripcion" => "Fallo al confirmar turno al RTO",
-                            "fix" => "CONFIRM",
-                            "id_turno" => $turno->id,
-                            "nro_turno_rto" => $datos_turno->nro_turno_rto,
-                            "servicio" => "notification"
-                        ];
+                //     if( $response->getStatusCode()!=200){
 
-                        Logerror::insert($error);
+                //         $error=[
+                //             "tipo" => "CRITICO",
+                //             "descripcion" => "Fallo al confirmar turno al RTO",
+                //             "fix" => "CONFIRM",
+                //             "id_turno" => $turno->id,
+                //             "nro_turno_rto" => $datos_turno->nro_turno_rto,
+                //             "servicio" => "notification"
+                //         ];
+
+                //         Logerror::insert($error);
                         
-                    }
+                //     }
 
-                }catch(\Exception $e){
+                // }catch(\Exception $e){
 
-                    $error=[
-                        "tipo" => "CRITICO",
-                        "descripcion" => "Fallo al confirmar turno al RTO",
-                        "fix" => "CONFIRM",
-                        "id_turno" => $turno->id,
-                        "nro_turno_rto" => $datos_turno->nro_turno_rto,
-                        "servicio" => "notification"
-                    ];
+                //     $error=[
+                //         "tipo" => "CRITICO",
+                //         "descripcion" => "Fallo al confirmar turno al RTO",
+                //         "fix" => "CONFIRM",
+                //         "id_turno" => $turno->id,
+                //         "nro_turno_rto" => $datos_turno->nro_turno_rto,
+                //         "servicio" => "notification"
+                //     ];
 
-                    Logerror::insert($error);
+                //     Logerror::insert($error);
                         
 
-                }
+                // }
 
             }
 

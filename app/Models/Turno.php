@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Turno extends Model
 {
     protected $fillable=[
+		"id",
     	"fecha",
     	"hora",
     	"estado",
@@ -19,6 +20,14 @@ class Turno extends Model
     protected $table="turnos";
 
     public function linea(){
-    	return $this->belongsTo('App\Models\Linea','id_linea');
+    	return $this->belongsTo(Linea::class,'id_linea');
     }
+
+	public function cobro(){
+		return $this->hasOne(Cobro::class,'id_turno','id');
+	}
+
+	public function datos(){
+		return $this->hasOne(Datosturno::class,'id_turno','id');
+	}
 }

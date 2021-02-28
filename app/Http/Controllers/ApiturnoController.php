@@ -453,7 +453,7 @@ class ApiturnoController extends Controller
         // conseguir token yacare
         $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
         
-        // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDU5IiwiaWF0IjoxNjEzNjY5OTA2LCJleHAiOjE2NDUyMjY4NTgsIk9JRCI6NDQ1OSwiVElEIjoiWUFDQVJFX0FQSSJ9.8vVyQ9Eh4f5-IqScABBb6mTYeHiva7cUbD2ZMnfdZSvk4SjPrroI60uZbfInhoEXfUrzP8l-CYwtX4iEFS8e0g';
+        // $token_request='';
         
         $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
 
@@ -475,9 +475,11 @@ class ApiturnoController extends Controller
                 ]
             ],
             "notificationURL" => "https://centroeste.reviturnos.com.ar/api/auth/notif",
-            "redirectURL" => "https://notificaciones.com",
+            "redirectURL" => "https://turnos.rtorivadavia.com.ar/confirmado",
             "reference" => $referencia
         ];
+
+        
             
         
         $headers_yacare=[
@@ -511,6 +513,7 @@ class ApiturnoController extends Controller
             return response()->json($respuestaError,400);
             
         }
+
 
         $id_cobro=$response["paymentOrderUUID"];
 
@@ -613,6 +616,58 @@ class ApiturnoController extends Controller
             ];
 
             Logerror::insert($error);
+
+        }
+
+        $nuevoToken=$this->obtenerToken();
+
+        if($nuevoToken["status"]=='failed'){
+
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al obtener token previo a confirmar el turno",
+                "fix" => "CONFIRM",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => "",
+                "servicio" => "notification"
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+        try{
+
+            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
+
+            if( $response_rto->getStatusCode()!=200){
+
+                $error=[
+                    "tipo" => "CRITICO",
+                    "descripcion" => "Fallo al confirmar turno al RTO",
+                    "fix" => "CONFIRM",
+                    "id_turno" => $turno->id,
+                    "nro_turno_rto" => $nro_turno_rto,
+                    "servicio" => "notification"
+                ];
+
+                Logerror::insert($error);
+                        
+            }
+
+        }catch(\Exception $e){
+
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al confirmar turno al RTO",
+                "fix" => "CONFIRM",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => $datos_turno->nro_turno_rto,
+                "servicio" => "notification"
+            ];
+
+            Logerror::insert($error);
+                        
 
         }
 

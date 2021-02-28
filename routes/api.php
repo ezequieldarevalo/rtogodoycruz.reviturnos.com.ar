@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SimulacionController;
 use App\Http\Controllers\ApiturnoController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PagosController;
 
 /*
@@ -37,6 +38,9 @@ Route::group([
         Route::get('logout', [AuthController::class, 'logout']);
         Route::get('user', [AuthController::class, 'user']);
         Route::post('verify', [SimulacionController::class, 'verify']);
-        Route::post('obtTur', [ApiturnoController::class, 'obtenerTurnos']);
+        Route::get('turDia', [AdminController::class, 'obtenerTurnosDia']);
+        Route::get('tipVeh', [AdminController::class, 'obtenerTiposVehiculo']);
+        Route::post('creTur', [AdminController::class, 'crearTurno']);
+        Route::post('tur', [AdminController::class, 'obtenerDatosTurno']);
     });
 });
