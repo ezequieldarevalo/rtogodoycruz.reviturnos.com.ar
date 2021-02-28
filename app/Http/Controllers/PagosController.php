@@ -49,7 +49,7 @@ class PagosController extends Controller
 
             try{
                 
-                $response = Http::withOptions(['verify' => false])->post('https://rto.renzovinci.com.ar/api/v1/auth/login',$data);
+                $response = Http::withOptions(['verify' => false])->post('https://rto.mendoza.gov.ar/api/v1/auth/login',$data);
 
                 if( $response->getStatusCode()!=200){
 
@@ -331,7 +331,7 @@ class PagosController extends Controller
 
                 // try{
 
-                //     $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',array('turno' => $datos_turno->nro_turno_rto));
+                //     $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/confirmar',array('turno' => $datos_turno->nro_turno_rto));
 
                 //     if( $response->getStatusCode()!=200){
 
