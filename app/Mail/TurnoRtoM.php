@@ -38,6 +38,6 @@ class TurnoRtoM extends Mailable
     public function build()
     {
         return $this->from('turnos@rtorivadavia.com.ar','RTO Rivadavia')
-            ->view('emails.nuevoturno');
+            ->subject('Turno RTO Mendoza')->view('emails.nuevoturno');
     }
 }

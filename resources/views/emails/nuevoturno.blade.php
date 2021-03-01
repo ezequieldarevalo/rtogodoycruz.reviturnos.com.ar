@@ -38,8 +38,8 @@ html{
         <span class="titulo-dato">Hora:</span><span class="dato">&nbsp; {{ $turnomail->hora }}</span><br/>
         <span class="titulo-dato">Id de turno:</span><span class="dato">&nbsp; {{ $turnomail->id }}</span><br/>
 
-		<!-- <span class="dato">Recuerde que cuenta con 48hs para realizar el pago, de lo contrario se deshabilitará.</span><br/>
-        <span class="dato">Para realizar el pago si no lo hizo, puedo hacerlo haciendo <a href="{{ $turnomail->url_pago }}">click aquí</a>.</span> -->
+		<span class="dato">Recuerde que cuenta con 48hs para realizar el pago, de lo contrario se deshabilitará.</span><br/>
+        <span class="dato">Para realizar el pago si no lo hizo, puedo hacerlo haciendo <a href="{{ $turnomail->url_pago }}">click aquí</a>.</span>
 
     </div>
 </body>
