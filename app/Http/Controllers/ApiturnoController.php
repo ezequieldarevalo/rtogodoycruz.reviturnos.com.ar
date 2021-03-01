@@ -478,7 +478,7 @@ class ApiturnoController extends Controller
             "expirationTime" => 600,
             "items" => [
                 [
-                "name" => "Turno RTO San Martin Mendoza",
+                "name" => "Turno RTO Centro Este",
                 "quantity" => "1",
                 "unitPrice" => $precio_float
                 ]
