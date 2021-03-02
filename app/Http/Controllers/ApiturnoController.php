@@ -230,7 +230,7 @@ class ApiturnoController extends Controller
             ['vencimiento','<',$fecha_actual]            
         ];
         
-        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->orWhere($conditions2)->orderBy('fecha')->get();
+        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->orWhere($conditions2)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->get();
 
         $respuestaOK=[
             'status' => 'success',
