@@ -19,6 +19,8 @@ use App\Http\Controllers\PagosController;
 |
 */
 
+
+
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -31,6 +33,10 @@ Route::group([
     Route::post('solTur', [ApiturnoController::class, 'solicitarTurno']);
     Route::post('valTur', [ApiturnoController::class, 'validarTurno']);
     Route::post('notif', [PagosController::class, 'notification']);
+    // Route::post('regAte', [AdminController::class, 'registrarAtencion']);
+    
+
+    
 
     Route::group([
       'middleware' => 'auth:api'
@@ -40,7 +46,14 @@ Route::group([
         Route::post('verify', [SimulacionController::class, 'verify']);
         Route::get('turDia', [AdminController::class, 'obtenerTurnosDia']);
         Route::get('tipVeh', [AdminController::class, 'obtenerTiposVehiculo']);
-        Route::post('creTur', [AdminController::class, 'crearTurno']);
         Route::post('tur', [AdminController::class, 'obtenerDatosTurno']);
+        Route::post('creTur', [AdminController::class, 'crearTurno']);
+        Route::post('regPag', [AdminController::class, 'registrarPago']);
+        Route::get('turId', [AdminController::class, 'buscarTurnoPorId']);
+    Route::get('turDom', [AdminController::class, 'buscarTurnoPorDominio']);
+    Route::get('obtTurRep', [AdminController::class, 'obtenerTurnosParaReprog']);
+    Route::post('repTur', [AdminController::class, 'reprogramarTurno']);
+        
+        
     });
 });

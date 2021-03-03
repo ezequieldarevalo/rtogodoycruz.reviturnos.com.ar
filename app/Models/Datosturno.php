@@ -26,4 +26,8 @@ class Datosturno extends Model
     	return $this->belongsTo('App\Models\Turno','id_turno');
     }
 
+        public function precio(){
+		return $this->hasOne(Precio::class,'descripcion','tipo_vehiculo');
+	}
+
 }
