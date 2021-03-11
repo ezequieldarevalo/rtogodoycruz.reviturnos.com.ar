@@ -25,7 +25,7 @@ class AdminController extends Controller
 {
 
 
-    public function obtenerTurnosDia(Request $request){
+    public function obtenerTurnosDiaActual(Request $request){
 
 
         $fecha_actual=new DateTime();
@@ -42,15 +42,74 @@ class AdminController extends Controller
             ['fecha' ,'=', $dia_actual],
             ['estado' ,'=', "C"]
         ];
+        
+        $conditions3=[
+            ['fecha' ,'>=', $dia_actual],
+            ['estado' ,'=', "P"]
+        ];
 
-        // $conditions3=[
-        //     ['fecha' ,'=', $dia_actual],
-        //     ['estado' ,'=', "D"]
-        // ];
+        $conditions4=[
+            ['fecha' ,'>=', $dia_actual],
+            ['estado' ,'=', "C"]
+        ];
+        
 
 
         $turnos=Turno::where($conditions)->orWhere($conditions2)->get();
 
+        $dias_turno=Turno::where($conditions3)->orWhere($conditions4)->distinct('fecha')->get(['fecha']);
+
+        $dias_futuros=[];
+        foreach ($dias_turno as $dia){
+            array_push($dias_futuros,$dia);
+        }
+
+        $turnos_dia=[];
+        foreach ($turnos as $turno){
+            $turno->datos;
+            $turno->cobro;
+            array_push($turnos_dia,$turno);
+        }
+
+        $respuesta=[
+            'turnosDia' => $turnos_dia,
+            'diasFuturos' => $dias_futuros
+        ];
+
+        return response()->json($respuesta,200);
+
+    }
+
+
+    public function obtenerTurnosDiaFuturo(Request $request){
+
+        $validator = Validator::make($request->all(), [
+            'dia' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            
+            $respuesta=[
+                'status' => 'failed',
+                'mensaje' => "Datos inválidos"
+            ];
+                    
+            return response()->json($respuesta,400);
+        }
+
+        $dia=$request->input("dia");
+
+        $conditions=[
+            ['fecha' ,'=', $dia],
+            ['estado' ,'=', "P"]
+        ];
+
+        $conditions2=[
+            ['fecha' ,'=', $dia],
+            ['estado' ,'=', "C"]
+        ];
+        
+        $turnos=Turno::where($conditions)->orWhere($conditions2)->get();
 
         $resultado=[];
         foreach ($turnos as $turno){

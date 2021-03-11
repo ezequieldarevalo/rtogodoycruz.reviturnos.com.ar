@@ -44,7 +44,8 @@ Route::group([
         Route::get('logout', [AuthController::class, 'logout']);
         Route::get('user', [AuthController::class, 'user']);
         Route::post('verify', [SimulacionController::class, 'verify']);
-        Route::get('turDia', [AdminController::class, 'obtenerTurnosDia']);
+        Route::get('turDiaAct', [AdminController::class, 'obtenerTurnosDiaActual']);
+        Route::get('turDiaFut', [AdminController::class, 'obtenerTurnosDiaFuturo']);
         Route::get('tipVeh', [AdminController::class, 'obtenerTiposVehiculo']);
         Route::post('tur', [AdminController::class, 'obtenerDatosTurno']);
         Route::post('creTur', [AdminController::class, 'crearTurno']);
