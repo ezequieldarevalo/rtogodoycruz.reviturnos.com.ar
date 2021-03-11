@@ -190,7 +190,7 @@ class PagosController extends Controller
         $url_request='https://api.yacare.com/v1/operations-managment/operations?transaction='.$id_cobro;
 
         // url desarrollo
-        $url_request='https://core.demo.yacare.com/api-homologacion/v1/operations-managment/operations?transaction='.$id_cobro;
+        // $url_request='https://core.demo.yacare.com/api-homologacion/v1/operations-managment/operations?transaction='.$id_cobro;
         
         // token yacare produccion
         $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDg5IiwiaWF0IjoxNjEzNzYzNjI4LCJleHAiOjE2NDUzMjA1ODAsIk9JRCI6NDQ4OSwiVElEIjoiWUFDQVJFX0FQSSJ9.wpkLqfoHe5l6d2seKI3cvdDQj1A4-B2WXcxNC08fTC-1b_WvxONdn61TwSF2FF81X_BngS3R0gvpaw5RV6s44g';
