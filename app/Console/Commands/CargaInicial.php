@@ -54,7 +54,7 @@ class CargaInicial extends Command
         $dia_actual=date("Y-m-d");
 
         //calculo el primer dia de turnos el cual corresponde a dos dias posteriores al actual
-        // $fecha_proceso=date("Y-m-d",strtotime($dia_actual."+ 2 days"));
+        $fecha_proceso=date("Y-m-d",strtotime($dia_actual));
 
         //calculo el ultimo dia de turnos
         $ultimo_dia=date("Y-m-d",strtotime($dia_actual."+ ".$config->cant_dias_disponibles." days"));
