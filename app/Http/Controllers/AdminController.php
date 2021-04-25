@@ -55,7 +55,7 @@ class AdminController extends Controller
         
 
 
-        $turnos=Turno::where($conditions)->orWhere($conditions2)->get();
+        $turnos=Turno::where($conditions)->orWhere($conditions2)->orderBy('hora')->get();
 
         $dias_turno=Turno::where($conditions3)->orWhere($conditions4)->distinct('fecha')->get(['fecha']);
 
@@ -109,7 +109,7 @@ class AdminController extends Controller
             ['estado' ,'=', "C"]
         ];
         
-        $turnos=Turno::where($conditions)->orWhere($conditions2)->get();
+        $turnos=Turno::where($conditions)->orWhere($conditions2)->orderBy('hora')->get();
 
         $resultado=[];
         foreach ($turnos as $turno){
