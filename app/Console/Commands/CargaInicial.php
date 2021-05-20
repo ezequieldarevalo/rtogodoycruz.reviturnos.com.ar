@@ -77,6 +77,8 @@ class CargaInicial extends Command
             array_push($dias_lunes,$dia_lunes->nro_dia);
         }
 
+        echo "llegue 1";
+
         // obtengo feriados
         $dias_feriados=array();
         $feriados=Feriado::whereBetween('fecha',[$dia_actual,$ultimo_dia])->get();
@@ -84,12 +86,16 @@ class CargaInicial extends Command
             array_push($dias_feriados,$feriado->fecha);
         }
 
+        echo "llegue 2";
+
         // obtengo francos
         $dias_nolaborales=array();
         $nolaborales=Franco::all();
         foreach($nolaborales as $nolaboral){
             array_push($dias_nolaborales,$nolaboral->dia);
         }
+
+        echo "llegue 3";
 
         // inicializo array donde guardare los dias a mostrar
         $dias_laborales=array();
@@ -111,6 +117,8 @@ class CargaInicial extends Command
         }
 
         // echo $ultimo_dia_turnos;
+
+        echo "llegue 4";
 
         for($i=0;$i<=$maximo;$i++){
         
