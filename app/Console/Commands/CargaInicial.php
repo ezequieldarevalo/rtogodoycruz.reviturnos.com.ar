@@ -203,12 +203,12 @@ class CargaInicial extends Command
 		}else{
 
             if($lunes){
-                $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1_lunes,"T",$dia,$linea->desde_franja_1_lunes,$linea->hasta_franja_1_lunes);     
+                $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1,"T",$dia,$linea->desde_franja_1_lunes,$linea->hasta_franja_1_lunes);     
                 // $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_1,$linea->hasta_franja_1);
                         
                 if($linea->cant_franjas==2){
 
-                    $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1_lunes,"T",$dia,$linea->desde_franja_2_lunes,$linea->hasta_franja_2_lunes);
+                    $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1,"T",$dia,$linea->desde_franja_2_lunes,$linea->hasta_franja_2_lunes);
                     // $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_2,$linea->hasta_franja_2);
                 }
             }else{
