@@ -63,20 +63,19 @@ class CargaInicial extends Command
         //	importo dias fin de semana
 		$fds=Fd::all();
 
-        echo "llegue - 0";
+        $dias_fds=array();
+		foreach($fds as $d){
+            array_push($dias_fds,$d->nro_dia);
+        }
 
         //	importo dia lunes
 		$lunes=Lunes::all();
-
-        echo "llegue - 0.1";
 		
 		// paso a un array lo obtenido
 		$dias_lunes=array();
-		foreach($luness as $lunes){
-            array_push($dias_lunes,$lunes->nro_dia);
+		foreach($lunes_all as $dia_lunes){
+            array_push($dias_lunes,$dia_lunes->nro_dia);
         }
-
-        echo "llegue - 0.2";
 
         // obtengo feriados
         $dias_feriados=array();
@@ -92,14 +91,11 @@ class CargaInicial extends Command
             array_push($dias_nolaborales,$nolaboral->dia);
         }
 
-        echo "llegue - 1";
-
         // inicializo array donde guardare los dias a mostrar
         $dias_laborales=array();
 		$dias_laborales_fds=array();
         $dias_laborales_lunes=array();
 
-        echo "llegue - 2";
 
         // obtengo la cantidad de dias a futuro que se mostraran
         // para la planta correspondiente
