@@ -71,7 +71,6 @@ class CargaInicial extends Command
         //	importo dia lunes
 		$lunes=Lune::all();
 
-        echo "llegue 0";
 		
 		// paso a un array lo obtenido
 		$dias_lunes=array();
@@ -79,7 +78,6 @@ class CargaInicial extends Command
             array_push($dias_lunes,$dia_lunes->nro_dia);
         }
 
-        echo "llegue 1";
 
         // obtengo feriados
         $dias_feriados=array();
@@ -88,7 +86,6 @@ class CargaInicial extends Command
             array_push($dias_feriados,$feriado->fecha);
         }
 
-        echo "llegue 2";
 
         // obtengo francos
         $dias_nolaborales=array();
@@ -97,7 +94,6 @@ class CargaInicial extends Command
             array_push($dias_nolaborales,$nolaboral->dia);
         }
 
-        echo "llegue 3";
 
         // inicializo array donde guardare los dias a mostrar
         $dias_laborales=array();
@@ -119,8 +115,6 @@ class CargaInicial extends Command
         }
 
         // echo $ultimo_dia_turnos;
-
-        echo "llegue 4";
 
         for($i=0;$i<=$maximo;$i++){
         
@@ -152,25 +146,23 @@ class CargaInicial extends Command
 
         }
 
-        echo "llegue - 1";
-
-        // var_dump($dias_laborales_fds);
+        
 
         $lineas=Linea::get();
 
-        echo "llegue - 1";
-
+        
+        var_dump($dias_laborales);
+        var_dump($dias_laborales_fds);
         var_dump($dias_laborales_lunes);
 
         return;
-
                 
 
         foreach($dias_laborales as $dia_laboral){
 
             foreach($lineas as $linea){
 
-                $this->disponibilizarFranjas($linea,$dia_laboral,false);
+                $this->disponibilizarFranjas($linea,$dia_laboral,false,false);
                       
             } // fin foreach lineas
 
@@ -180,7 +172,7 @@ class CargaInicial extends Command
 
             foreach($lineas as $linea){
 
-                $this->disponibilizarFranjas($linea,$dia_laboral,true);
+                $this->disponibilizarFranjas($linea,$dia_laboral,true,false);
                       
             } // fin foreach lineas
 
@@ -190,7 +182,7 @@ class CargaInicial extends Command
 
             foreach($lineas as $linea){
 
-                $this->disponibilizarFranjas($linea,$dia_laboral,true);
+                $this->disponibilizarFranjas($linea,$dia_laboral,false,true);
                       
             } // fin foreach lineas
 
@@ -200,7 +192,7 @@ class CargaInicial extends Command
 
     }
 
-    public function disponibilizarFranjas($linea,$dia,$fds){
+    public function disponibilizarFranjas($linea,$dia,$fds,$lunes){
                 
         if($fds){
 			
