@@ -152,9 +152,15 @@ class CargaInicial extends Command
 
         }
 
+        echo "llegue - 1";
+
         // var_dump($dias_laborales_fds);
 
         $lineas=Linea::get();
+
+        echo "llegue - 1";
+
+        return;
 
                 
 
