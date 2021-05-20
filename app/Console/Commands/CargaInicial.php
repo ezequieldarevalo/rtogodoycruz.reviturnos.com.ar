@@ -150,12 +150,7 @@ class CargaInicial extends Command
 
         $lineas=Linea::get();
 
-        
-        var_dump($dias_laborales);
-        var_dump($dias_laborales_fds);
-        var_dump($dias_laborales_lunes);
-
-        return;
+   
                 
 
         foreach($dias_laborales as $dia_laboral){
