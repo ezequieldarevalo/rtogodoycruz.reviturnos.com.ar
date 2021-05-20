@@ -150,7 +150,15 @@ class CargaInicial extends Command
 
         $lineas=Linea::get();
 
-   
+        foreach($dias_laborales_lunes as $dia_laboral){
+
+            foreach($lineas as $linea){
+
+                $this->disponibilizarFranjas($linea,$dia_laboral,false,true);
+                      
+            } // fin foreach lineas
+
+        } 
                 
 
         foreach($dias_laborales as $dia_laboral){
@@ -173,15 +181,7 @@ class CargaInicial extends Command
 
         }
 
-        foreach($dias_laborales_lunes as $dia_laboral){
-
-            foreach($lineas as $linea){
-
-                $this->disponibilizarFranjas($linea,$dia_laboral,false,true);
-                      
-            } // fin foreach lineas
-
-        } 
+        
 
     return "Carga de turnos finalizada.";
 
