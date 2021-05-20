@@ -9,7 +9,7 @@ use App\Models\Planta;
 use App\Models\Feriado;
 use App\Models\Franco;
 use App\Models\Fd;
-use App\Models\Lunes;
+use App\Models\Lune;
 use App\Models\Config;
 
 class CargaInicial extends Command
@@ -69,13 +69,13 @@ class CargaInicial extends Command
         }
 
         //	importo dia lunes
-		$lunes=Lunes::all();
+		$lunes=Lune::all();
 
         echo "llegue 0";
 		
 		// paso a un array lo obtenido
 		$dias_lunes=array();
-		foreach($lunes_all as $dia_lunes){
+		foreach($lunes as $dia_lunes){
             array_push($dias_lunes,$dia_lunes->nro_dia);
         }
 

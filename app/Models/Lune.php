@@ -9,8 +9,6 @@ class Lunes extends Model
 {
     use HasFactory;
 
-    protected $table="lunes";
-
     protected $fillable=[
     	"nro_dia"
     ];
