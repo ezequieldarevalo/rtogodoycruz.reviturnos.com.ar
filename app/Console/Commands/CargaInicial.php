@@ -61,14 +61,15 @@ class CargaInicial extends Command
 
         //	importo dias fin de semana
 		$fds=Fd::all();
+
+        //	importo dia lunes
+		$lunes=Lunes::all();
 		
 		// paso a un array lo obtenido
-		$dias_fds=array();
-		foreach($fds as $d){
-            array_push($dias_fds,$d->nro_dia);
+		$dias_lunes=array();
+		foreach($luness as $lunes){
+            array_push($dias_lunes,$lunes->nro_dia);
         }
-
-        var_dump($dias_fds);
 
         // obtengo feriados
         $dias_feriados=array();
@@ -87,6 +88,7 @@ class CargaInicial extends Command
         // inicializo array donde guardare los dias a mostrar
         $dias_laborales=array();
 		$dias_laborales_fds=array();
+        $dias_laborales_lunes=array();
 
         // obtengo la cantidad de dias a futuro que se mostraran
         // para la planta correspondiente
@@ -116,10 +118,13 @@ class CargaInicial extends Command
                 if($fecha_proceso>$ultimo_dia_turnos){
                     echo "Dia semana: ".$dia_semana."\n";
                     if(in_array($dia_semana, $dias_fds)){
-
                         array_push($dias_laborales_fds,$fecha_proceso);
                     }else{
-                        array_push($dias_laborales,$fecha_proceso);
+                        if(in_array($dia_semana,$dias_lunes)){
+                           array_push($dias_laborales_lunes,$fecha_proceso); 
+                        }else{
+                            array_push($dias_laborales,$fecha_proceso);
+                        }
                     }
                 }
 
@@ -154,6 +159,16 @@ class CargaInicial extends Command
                       
             } // fin foreach lineas
 
+        }
+
+        foreach($dias_laborales_lunes as $dia_laboral){
+
+            foreach($lineas as $linea){
+
+                $this->disponibilizarFranjas($linea,$dia_laboral,true);
+                      
+            } // fin foreach lineas
+
         } 
 
     return "Carga de turnos finalizada.";
@@ -173,15 +188,28 @@ class CargaInicial extends Command
 			// 	// $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_2,$linea->hasta_franja_2);
 			// }
 			
-		}else{    
-			$this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1,"T",$dia,$linea->desde_franja_1,$linea->hasta_franja_1);
-			// $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_1,$linea->hasta_franja_1);
-					
-			if($linea->cant_franjas==2){
+		}else{
 
-				$this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1,"T",$dia,$linea->desde_franja_2,$linea->hasta_franja_2);
-				// $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_2,$linea->hasta_franja_2);
-			}
+            if($lunes){
+                $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1_lunes,"T",$dia,$linea->desde_franja_1_lunes,$linea->hasta_franja_1_lunes);     
+                // $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_1,$linea->hasta_franja_1);
+                        
+                if($linea->cant_franjas==2){
+
+                    $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1_lunes,"T",$dia,$linea->desde_franja_2_lunes,$linea->hasta_franja_2_lunes);
+                    // $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_2,$linea->hasta_franja_2);
+                }
+            }else{
+                $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1,"T",$dia,$linea->desde_franja_1,$linea->hasta_franja_1);
+                // $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_1,$linea->hasta_franja_1);
+                        
+                if($linea->cant_franjas==2){
+
+                    $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_1,"T",$dia,$linea->desde_franja_2,$linea->hasta_franja_2);
+                    // $this->disponibilizarFranja($linea->id,$linea->tope_por_hora_2,"A",$dia,$linea->desde_franja_2,$linea->hasta_franja_2);
+                }
+            }
+			
 		}
                 
     }
