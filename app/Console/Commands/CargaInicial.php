@@ -63,6 +63,8 @@ class CargaInicial extends Command
         //	importo dias fin de semana
 		$fds=Fd::all();
 
+        echo "llegue - 0";
+
         //	importo dia lunes
 		$lunes=Lunes::all();
 		
