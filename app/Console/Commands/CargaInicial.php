@@ -67,12 +67,16 @@ class CargaInicial extends Command
 
         //	importo dia lunes
 		$lunes=Lunes::all();
+
+        echo "llegue - 0.1";
 		
 		// paso a un array lo obtenido
 		$dias_lunes=array();
 		foreach($luness as $lunes){
             array_push($dias_lunes,$lunes->nro_dia);
         }
+
+        echo "llegue - 0.2";
 
         // obtengo feriados
         $dias_feriados=array();
