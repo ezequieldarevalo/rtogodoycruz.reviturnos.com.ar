@@ -9,6 +9,7 @@ use App\Models\Planta;
 use App\Models\Feriado;
 use App\Models\Franco;
 use App\Models\Fd;
+use App\Models\Lunes;
 use App\Models\Config;
 
 class CargaInicial extends Command
@@ -85,10 +86,14 @@ class CargaInicial extends Command
             array_push($dias_nolaborales,$nolaboral->dia);
         }
 
+        echo "llegue - 1";
+
         // inicializo array donde guardare los dias a mostrar
         $dias_laborales=array();
 		$dias_laborales_fds=array();
         $dias_laborales_lunes=array();
+
+        echo "llegue - 2";
 
         // obtengo la cantidad de dias a futuro que se mostraran
         // para la planta correspondiente
