@@ -70,6 +70,8 @@ class CargaInicial extends Command
 
         //	importo dia lunes
 		$lunes=Lunes::all();
+
+        echo "llegue 0";
 		
 		// paso a un array lo obtenido
 		$dias_lunes=array();
