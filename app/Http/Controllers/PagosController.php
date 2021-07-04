@@ -500,7 +500,150 @@ class PagosController extends Controller
     }
 
 
+    public function notificationMeli(Request $request){
 
+        
+        // ALMACENO EL INPUT EN LA VARIABLE ID_COBRO
+        ///////////////////////
+        $id_cobro=$request->input("data.id");
+
+
+        // VOY A BUSCAR LOS DATOS DEL PAGO
+        $url_preffix='https://api.mercadopago.com/v1/payments/';
+        $url_access_code='TEST-1963147828445709-052222-3ab1f18bc72827756c825693867919c9-32577613';
+        $url_request=$url_preffix.$id_cobro.'?access_token='.$url_access_code;
+
+        try{
+            
+            $response = Http::get($url_request);
+
+        }catch(\Exception $e){
+
+            $error=[
+                "tipo" => "YACARE",
+                "descripcion" => "Fallo la consulta de estado del id: ".$id_cobro,
+                "fix" => "NA",
+                "id_turno" => 0,
+                "nro_turno_rto" => "",
+                "servicio" => "notification"
+            ];
+
+            Logerror::insert($error);
+
+            $respuesta=[
+                'status' => 'OK'
+            ];
+                    
+            return response()->json($respuesta,200);
+        }
+
+        // BUSCO EL TURNO CON LA REFERENCIA TRAIDA DE LOS DATOS DEL PAGO
+        ///////////////////////
+        $turno=Turno::where('id_cobro_yac',$response["external_reference"])->first();
+
+        
+        // SI LA BUSQUEDA NO DA RESULTADO, REGISTRO EL ERROR
+        ///////////////////////
+        if(!$turno){
+            
+            $error=[
+                "tipo" => "TABLA",
+                "descripcion" => "Fallo la consulta en la tabla turnos con el id de cobro: ".$id_cobro,
+                "fix" => "NA",
+                "id_turno" => 0,
+                "nro_turno_rto" => "",
+                "servicio" => "notification"
+            ];
+
+            Logerror::insert($error);
+
+            $respuesta=[
+                'status' => 'OK'
+            ];
+                    
+            return response()->json($respuesta,200);
+        }
+
+
+        ////// SI EL PAGO ESTA APROBADO
+        if($response["status"]=='approved'){
+
+            
+            // OBTENGO ID DEL TURNO EN LA RTO PARA CONFIRMAR A RTO MENDOZA
+            /////////////////////////////////////////////////////////////////////
+            $datos_turno=Datosturno::where('id_turno',$turno->id)->first();
+
+            if(!$datos_turno){
+
+                $error=[
+                    "tipo" => "CRITICO",
+                    "descripcion" => "No se encuentran datos del turno para confirmar a la RTO.",
+                    "fix" => "CONFIRM",
+                    "id_turno" => $turno->id,
+                    "nro_turno_rto" => "",
+                    "servicio" => "notification"
+                ];
+
+                Logerror::insert($error);
+
+            }
+
+            // ACTUALIZO ESTADO DEL TURNO
+            $res_pagar=Turno::where('id',$turno->id)->update(array('estado' => "P"));
+            
+            if(!$res_pagar){
+                
+                $error=[
+                    "tipo" => "CRITICO",
+                    "descripcion" => "Fallo al actualizar el estado del turno a pagado",
+                    "fix" => "REVISAR",
+                    "id_turno" => $turno->id,
+                    "nro_turno_rto" => $datos_turno->nro_turno_rto,
+                    "servicio" => "notification"
+                ];
+
+                Logerror::insert($error);
+
+            }
+
+            $res_cobro=Cobro::insert(array(
+                'fecha' => substr($response["date_approved"],0,19),
+                'monto' => $response["transaction_amount"],
+                'metodo' => $response["payment_type_id"].' - '.$response["payment_method_id"],
+                'nro_op' => 'MP-'.$response["id"],
+                'origen' => "MercadoPago",
+                'id_turno' => $turno->id,
+                'id_cobro' => $id_cobro
+            ));
+
+            if(!$res_cobro){
+                
+                $error=[
+                        "tipo" => "CRITICO",
+                        "descripcion" => "El cobro no pudo registrarse",
+                        "fix" => "REVISAR",
+                        "id_turno" => $turno->id,
+                        "nro_turno_rto" => $datos_turno->nro_turno_rto,
+                        "servicio" => "notification"
+                    ];
+
+                Logerror::insert($error);
+
+            }
+
+            $respuesta=[
+                'status' => 'OK'
+            ];
+                    
+            return response()->json($respuesta,200);
+
+            // break;
+
+
+
+        }
+
+    }
 
 
 

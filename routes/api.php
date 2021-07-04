@@ -31,8 +31,11 @@ Route::group([
     Route::post('login', [AuthController::class, 'login']);
     // Route::post('signup', [AuthController::class, 'signUp']);
     Route::post('solTur', [ApiturnoController::class, 'solicitarTurno']);
+    Route::post('confQuote', [ApiturnoController::class, 'confirmQuote']);
     Route::post('valTur', [ApiturnoController::class, 'validarTurno']);
+    Route::post('getQuotes', [ApiturnoController::class, 'getAvailableQuotes']);
     Route::post('notif', [PagosController::class, 'notification']);
+    Route::post('notifMeli', [PagosController::class, 'notificationMeli']);
     // Route::post('regAte', [AdminController::class, 'registrarAtencion']);
     
 
