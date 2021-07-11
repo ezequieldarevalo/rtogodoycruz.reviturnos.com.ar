@@ -280,11 +280,11 @@ class ApiturnoController extends Controller
 
         
         // obtengo token de plataforma RTO
-        // $nuevoToken=$this->obtenerToken();
-        $nuevoToken=[
-            'status' => 'success',
-            'token' => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiY2JiMmZkODc2Nzg4OGQwNDM4ODc2MzQwMjk4MmVjNTRhMDUzZTA5NjE3ZDY2NGViZTIxZmNhNGY5ZTQ4NjEyZjdjOWMzMWY5OGExNjUwNjEiLCJpYXQiOjE2MjU0MTIyMDMsIm5iZiI6MTYyNTQxMjIwMywiZXhwIjoxNjU2OTQ4MjAzLCJzdWIiOiIzMCIsInNjb3BlcyI6W119.fskusCPkWuMPcVN5C3g_htCet2ajvLKjvAV7mAYQbWqMp9p90RlTioFhWdE7VFQyuQAz7hDxbED4WWmNFdyoyRIwoTM90YWf_rW0SsinNBUiPuRMmwD3amYH9ZHXtDHie_TSkO7wlVrT7olCXwEdP8Gt-9eyc8l4IDnqCpIZTi-9OvgDKdvIVByhld9Dn4rNrjhYG7qRxpwJNZPGs8bI1RrUUgoCSAolEMCSt3l0NObHwEnouDhxO8qWqxfgFzm6esrcAkXLbRxkVtkPwO9FTFKMpiy1W3_lUTuxK7EmcZcsxJ0syGFsf47ChC7P9KwCujeHsWvIqfEZRg5l86jjrkI_fAam-liLe79gvj8fBL8ihu6UZFJfxvwjhZ_ZyeZqFVeOW1i-bY3yCsxMIXyrb2ux07pvMUke4jLEd-o_PmIH_ZsFdJMfB21ERo6f0ZxW-cwwVlGuE6R4WcqInR0Ml77soUts7xQiwtmVEBF3oKns_WC4uoURtR9zQSh2j4pIZi5cJPBpDQ7w0Mg3Mx3KtFpfN-xnazscQAHHpoSc4UGOXUs0NPpiK275NivrHI9KkzDZLO2fgula6fdFPrzzzAJHRdIqXgWO7f9LM3XICR_GDUgJI1Ie0k_XrkBspfORgBKoTEKYyWWkos4r7csQcbUwExeKXHpLguA4VJttx8Q'
-        ];
+        $nuevoToken=$this->obtenerToken();
+        // $nuevoToken=[
+        //     'status' => 'success',
+        //     'token' => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiY2JiMmZkODc2Nzg4OGQwNDM4ODc2MzQwMjk4MmVjNTRhMDUzZTA5NjE3ZDY2NGViZTIxZmNhNGY5ZTQ4NjEyZjdjOWMzMWY5OGExNjUwNjEiLCJpYXQiOjE2MjU0MTIyMDMsIm5iZiI6MTYyNTQxMjIwMywiZXhwIjoxNjU2OTQ4MjAzLCJzdWIiOiIzMCIsInNjb3BlcyI6W119.fskusCPkWuMPcVN5C3g_htCet2ajvLKjvAV7mAYQbWqMp9p90RlTioFhWdE7VFQyuQAz7hDxbED4WWmNFdyoyRIwoTM90YWf_rW0SsinNBUiPuRMmwD3amYH9ZHXtDHie_TSkO7wlVrT7olCXwEdP8Gt-9eyc8l4IDnqCpIZTi-9OvgDKdvIVByhld9Dn4rNrjhYG7qRxpwJNZPGs8bI1RrUUgoCSAolEMCSt3l0NObHwEnouDhxO8qWqxfgFzm6esrcAkXLbRxkVtkPwO9FTFKMpiy1W3_lUTuxK7EmcZcsxJ0syGFsf47ChC7P9KwCujeHsWvIqfEZRg5l86jjrkI_fAam-liLe79gvj8fBL8ihu6UZFJfxvwjhZ_ZyeZqFVeOW1i-bY3yCsxMIXyrb2ux07pvMUke4jLEd-o_PmIH_ZsFdJMfB21ERo6f0ZxW-cwwVlGuE6R4WcqInR0Ml77soUts7xQiwtmVEBF3oKns_WC4uoURtR9zQSh2j4pIZi5cJPBpDQ7w0Mg3Mx3KtFpfN-xnazscQAHHpoSc4UGOXUs0NPpiK275NivrHI9KkzDZLO2fgula6fdFPrzzzAJHRdIqXgWO7f9LM3XICR_GDUgJI1Ie0k_XrkBspfORgBKoTEKYyWWkos4r7csQcbUwExeKXHpLguA4VJttx8Q'
+        // ];
 
 
         if($nuevoToken["status"]=='failed'){
