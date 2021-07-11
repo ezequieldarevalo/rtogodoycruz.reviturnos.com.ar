@@ -15,6 +15,8 @@ use Http;
 use App\Mail\TurnoRtoM;
 use SteamCondenser\Exceptions\SocketException;
 use Illuminate\Support\Facades\Mail;
+use App\Models\PagoRto;
+use App\Mail\PagoRtoM;
 
 class PagosController extends Controller
 {
@@ -510,7 +512,7 @@ class PagosController extends Controller
 
         // VOY A BUSCAR LOS DATOS DEL PAGO
         $url_preffix='https://api.mercadopago.com/v1/payments/';
-        $url_access_code='TEST-1963147828445709-052222-3ab1f18bc72827756c825693867919c9-32577613';
+        $url_access_code='APP_USR-5150441327591477-070520-9c02fe96f0c292d0fa40340ab964b8bc-15129767';
         $url_request=$url_preffix.$id_cobro.'?access_token='.$url_access_code;
 
         try{
@@ -626,6 +628,35 @@ class PagosController extends Controller
                         "nro_turno_rto" => $datos_turno->nro_turno_rto,
                         "servicio" => "notification"
                     ];
+
+                Logerror::insert($error);
+
+            }
+
+            
+
+
+            try{
+                
+                $datos_mail=new PagoRto;
+                $datos_mail->id=$turno->id;
+                $datos_mail->fecha=$turno->fecha;
+                $datos_mail->hora=$turno->hora;
+                $datos_mail->url_pago="";
+                $datos_mail->dominio=$datos_turno->dominio;
+                $datos_mail->nombre=$datos_turno->nombre;
+                Mail::to($datos_turno->email)->send(new PagoRtoM($datos_mail));
+
+            }catch(\Exception $e){
+                
+                $error=[
+                    "tipo" => "CRITICO",
+                    "descripcion" => "Fallo al enviar confirmacion por pago del turno al cliente",
+                    "fix" => "MAIL",
+                    "id_turno" => $turno->id,
+                    "nro_turno_rto" => $datos_turno->nro_turno_rto,
+                    "servicio" => "notifMeli"
+                ];
 
                 Logerror::insert($error);
 

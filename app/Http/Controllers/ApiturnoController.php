@@ -202,7 +202,9 @@ class ApiturnoController extends Controller
             return response()->json($respuestaError,400);
         }
 
-        $dia_actual=date("Y-m-d");
+        // $dia_actual=date("Y-m-d");
+        $dia_actual=new DateTime();
+        $primer_dia_turnos=$dia_actual->modify('+2 days');
 
         $conditions=[
             "tipo_vehiculo" => $vehiculo->tipo_vehiculo
@@ -218,7 +220,7 @@ class ApiturnoController extends Controller
         $conditions=[
             ['estado','=','D'],
             ['origen','=','T'],
-            ['fecha','>=',$dia_actual]
+            ['fecha','>=',$primer_dia_turnos]
         ];
 
         $fecha_actual=new DateTime();
@@ -226,11 +228,11 @@ class ApiturnoController extends Controller
         $conditions2=[
             ['estado','=','R'],
             ['origen','=','T'],
-            ['fecha','>=',$dia_actual],
-            ['vencimiento','<',$fecha_actual]            
+            ['fecha','>=',$primer_dia_turnos],
+            ['vencimiento','<',$primer_dia_turnos]            
         ];
         
-        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->orWhere($conditions2)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->get();
+        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->get();
 
         $respuestaOK=[
             'status' => 'success',
@@ -359,7 +361,9 @@ class ApiturnoController extends Controller
             return response()->json($respuestaError,404);
         }
 
-        $dia_actual=date("Y-m-d");
+        // $dia_actual=date("Y-m-d");
+        $dia_actual=new DateTime();
+        $primer_dia_turnos=$dia_actual->modify('+2 days');
 
         $conditions=[
             "tipo_vehiculo" => $vehiculo->tipo_vehiculo
@@ -375,7 +379,7 @@ class ApiturnoController extends Controller
         $conditions=[
             ['estado','=','D'],
             ['origen','=','T'],
-            ['fecha','>=',$dia_actual]
+            ['fecha','>=',$primer_dia_turnos]
         ];
 
         $fecha_actual=new DateTime();
@@ -383,13 +387,13 @@ class ApiturnoController extends Controller
         $conditions2=[
             ['estado','=','R'],
             ['origen','=','T'],
-            ['fecha','>=',$dia_actual],
-            ['vencimiento','<',$fecha_actual]            
+            ['fecha','>=',$primer_dia_turnos],
+            ['vencimiento','<',$primer_dia_turnos]            
         ];
         
-        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->orWhere($conditions2)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->orderBy('hora')->get();
+        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->orderBy('hora')->get();
 
-        $dias=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->orWhere($conditions2)->whereIn('id_linea',$lineas_turnos)->distinct()->orderBy('fecha')->get(['fecha']);
+        $dias=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->whereIn('id_linea',$lineas_turnos)->distinct()->orderBy('fecha')->get(['fecha']);
 
         $array_dias=array();
         foreach($dias as $dia){
@@ -899,6 +903,8 @@ class ApiturnoController extends Controller
 
 
     public function confirmQuote(Request $request) {
+
+        
         
         if($request->header('Content-Type')!="application/json"){
             $respuesta=[
@@ -927,6 +933,8 @@ class ApiturnoController extends Controller
             return response()->json($respuesta,400);
         }
 
+        
+
         $nro_turno_rto=$request->input("nro_turno_rto");
         $email_solicitud=$request->input("email");
         $id_turno=$request->input("id_turno");
@@ -934,11 +942,11 @@ class ApiturnoController extends Controller
         $tipo_vehiculo=$request->input("tipo_vehiculo");
         $plataforma_pago=$request->input("plataforma_pago");
 
-        // $nuevoToken=$this->obtenerToken();
-        $nuevoToken=[
-            'status' => 'success',
-            'token' => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiY2JiMmZkODc2Nzg4OGQwNDM4ODc2MzQwMjk4MmVjNTRhMDUzZTA5NjE3ZDY2NGViZTIxZmNhNGY5ZTQ4NjEyZjdjOWMzMWY5OGExNjUwNjEiLCJpYXQiOjE2MjU0MTIyMDMsIm5iZiI6MTYyNTQxMjIwMywiZXhwIjoxNjU2OTQ4MjAzLCJzdWIiOiIzMCIsInNjb3BlcyI6W119.fskusCPkWuMPcVN5C3g_htCet2ajvLKjvAV7mAYQbWqMp9p90RlTioFhWdE7VFQyuQAz7hDxbED4WWmNFdyoyRIwoTM90YWf_rW0SsinNBUiPuRMmwD3amYH9ZHXtDHie_TSkO7wlVrT7olCXwEdP8Gt-9eyc8l4IDnqCpIZTi-9OvgDKdvIVByhld9Dn4rNrjhYG7qRxpwJNZPGs8bI1RrUUgoCSAolEMCSt3l0NObHwEnouDhxO8qWqxfgFzm6esrcAkXLbRxkVtkPwO9FTFKMpiy1W3_lUTuxK7EmcZcsxJ0syGFsf47ChC7P9KwCujeHsWvIqfEZRg5l86jjrkI_fAam-liLe79gvj8fBL8ihu6UZFJfxvwjhZ_ZyeZqFVeOW1i-bY3yCsxMIXyrb2ux07pvMUke4jLEd-o_PmIH_ZsFdJMfB21ERo6f0ZxW-cwwVlGuE6R4WcqInR0Ml77soUts7xQiwtmVEBF3oKns_WC4uoURtR9zQSh2j4pIZi5cJPBpDQ7w0Mg3Mx3KtFpfN-xnazscQAHHpoSc4UGOXUs0NPpiK275NivrHI9KkzDZLO2fgula6fdFPrzzzAJHRdIqXgWO7f9LM3XICR_GDUgJI1Ie0k_XrkBspfORgBKoTEKYyWWkos4r7csQcbUwExeKXHpLguA4VJttx8Q'
-        ];
+        $nuevoToken=$this->obtenerToken();
+        // $nuevoToken=[
+        //     'status' => 'success',
+        //     'token' => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiYWRmZDg4MGNjMzA2MjkyMTY3NWQ5NWQzNjFjY2ViOWJmNjIxZWRiNGE3Njk1YTIzNzRjMTYyMzgzNDk0YTJmZmEyZjA2NGZhZDFkMjRmMjQiLCJpYXQiOjE2MjU0MDEyODIsIm5iZiI6MTYyNTQwMTI4MiwiZXhwIjoxNjU2OTM3MjgyLCJzdWIiOiI1Iiwic2NvcGVzIjpbXX0.J5tnKOeZefum5f5vsovdb8O0TRjWHZocbSJvuN3G0HyDkRWiCE0grP_eRmX0XHPLr8WlZ9V1g7KUtrVGPiGQ3UsVv4QPV4ntava_Yju68lcU1qW3I4nOT1NcTdbu6sP3Uov_kNpFpqwGV8T8qivgdUIG0R3kUfuSK-2oYlUemPeVtvLaHj5HHXLu6uPQnw-_M97jJ8q65YXAcxiUrHKbu2Hvws4vtV8UkDwXJfWx3TK7p-PiiinTBgT1QgE5_F1ZAR6ikvnJ3T1jhRzvZrW2PatWUJbA1EFyu_qUAi24wbP1B__w6_8dAW7PA3_-RHrphIJTuEKvfsDAHOWhPUq293GP2cZWry4EAW50pgCZDxh_bE_b4g5sYVptc44ALFtoiQhz8vD58lM3zxfVWxTh6c8uNzhbmjVjvQJl4kgZYEkzgfPxHqTC418A_bZSbb0t6RxbqSJmZYg8RVvaBMyTSSpz5m9hFPT8WqgVdKLeIe3USNDVM-Qi_Rd74id5UixVnKt4zulXRgYiWKvr2AQY9pzIeyrMeHEvj53FV8zJpBkKsyHyq0zkr0kLgst5rPccweYmYco51VBJofpuFMT7nLiu8jyL6Y-6Y4OnS8X1VSXSozz8HmR6n7sWOlEPsZbo41IObFwYzsCtcDoTM9TP6gZIJIbdyUf1_vMoqyH9CR4'
+        // ];
 
         if($nuevoToken["status"]=='failed'){
             $respuestaError=[
@@ -951,9 +959,11 @@ class ApiturnoController extends Controller
             'turno' => $nro_turno_rto
         ];
 
+        
+
         try{
 
-            $res_info_turno = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/turno',$data);
+            $res_info_turno = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/turno',$data);
 
         }catch(\Exception $e){
                 
@@ -963,6 +973,8 @@ class ApiturnoController extends Controller
             return response()->json($respuestaError,404);
 
         }
+
+        
 
         if( $res_info_turno->getStatusCode()!=200){
 
@@ -981,6 +993,8 @@ class ApiturnoController extends Controller
             }
         }
 
+        
+
         $datos_turno=$res_info_turno["turno"];
 
         if($datos_turno["email"]!=$email_solicitud){
@@ -997,6 +1011,8 @@ class ApiturnoController extends Controller
             ];
             return response()->json($respuestaError,404);
         }
+
+        
 
         $fecha_actual=new DateTime();
 
@@ -1042,18 +1058,21 @@ class ApiturnoController extends Controller
         // $fecha_vencimiento=date("d-m-Y",strtotime($dia_actual."+ 12 hours"));
 
         
-        $fecha_vencimiento=$fecha_actual->modify('+21 hours');
-        $referencia=$id_turno.$fecha_actual->format('dmYHis');
+        $fecha_vencimiento=$fecha_actual->modify('+2 days');
+        $referencia=$id_turno.$fecha_actual->format('dmYHis').$datos_turno["patente"];
+        // $referencia=$id_turno.$fecha_actual->format('dmYHis');
+
+        
 
         if($plataforma_pago=='yacare'){
         
-            // $url_request_prod='https://api.yacare.com/v1/payment-orders-managment/payment-order';
-            $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
+            $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
+            // $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
                 
             // conseguir token yacare
-            $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
-            
-            // $token_request_prod='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDYwIiwiaWF0IjoxNjEzNjcwMDQ4LCJleHAiOjE2NDUyMjcwMDAsIk9JRCI6NDQ2MCwiVElEIjoiWUFDQVJFX0FQSSJ9.Y0UlVtRVYo1pQn72em4CcKi_k_f-lvFbKrPVR_u1-RnCupgNJSviV3bFOis_Uv0PWR5CHJqsjHgZBlhmhdU0ZA';
+            // $token_request_desa='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
+                
+            $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDg5IiwiaWF0IjoxNjEzNzYzNjI4LCJleHAiOjE2NDUzMjA1ODAsIk9JRCI6NDQ4OSwiVElEIjoiWUFDQVJFX0FQSSJ9.wpkLqfoHe5l6d2seKI3cvdDQj1A4-B2WXcxNC08fTC-1b_WvxONdn61TwSF2FF81X_BngS3R0gvpaw5RV6s44g';
             
             $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
 
@@ -1063,10 +1082,10 @@ class ApiturnoController extends Controller
                     "name" => $nombre_completo,
                     "surname" => ""
                 ],
-                "expirationTime" => 1320,
+                "expirationTime" => 2880,
                 "items" => [
                     [
-                    "name" => "Turno RTO Maipu",
+                    "name" => "Turno RTO Rivadavia",
                     "quantity" => "1",
                     "unitPrice" => $precio_float
                     ]
@@ -1113,11 +1132,12 @@ class ApiturnoController extends Controller
 
         }else{
 
-            $dia_vencimiento_mp=$fecha_vencimiento->format('Y-m-d');
-            $hora_vencimiento_mp=$fecha_vencimiento->format('H:i:s');
+            $fecha_vencimiento_aux_mp=$fecha_actual->modify('+21 hours');
+            $dia_vencimiento_mp=$fecha_vencimiento_aux_mp->format('Y-m-d');
+            $hora_vencimiento_mp=$fecha_vencimiento_aux_mp->format('H:i:s');
             $fecha_vencimiento_mp=$dia_vencimiento_mp.'T'.$hora_vencimiento_mp.'.000-00:00';
             $url_request="https://api.mercadopago.com/checkout/preferences";
-            $token_request="Bearer TEST-1963147828445709-052222-3ab1f18bc72827756c825693867919c9-32577613";
+            $token_request="Bearer APP_USR-5150441327591477-070520-9c02fe96f0c292d0fa40340ab964b8bc-15129767";
 
             $headers_mercadopago=[
                 'Authorization' => $token_request
@@ -1133,15 +1153,15 @@ class ApiturnoController extends Controller
                 ],
                 "items" => [
                     [
-                        "title" => "RTO - ref: ".$referencia,
+                        "title" => "RTO: ".$referencia,
                         "quantity" => 1,
                         "unit_price" => $vehiculo->precio,
                         "currency_id" => "ARS"
                     ]
                 ],
-                "back_urls" => [
-                    "success" => "https://turnos.reviturnos.com.ar/confirmed/rivadavia"
-                ],
+                // "back_urls" => [
+                //     "success" => "https://turnos.reviturnos.com.ar/confirmed/rivadavia"
+                // ],
                 "payment_methods" => [
                     "excluded_payment_methods" => [
                         [
@@ -1185,6 +1205,8 @@ class ApiturnoController extends Controller
             $url_pago=$res_mp["init_point"];
 
         }
+
+        
 
         // ACTUALIZO EL ESTADO DEL TURNO A RESERVADO
         $data_reserva=[
@@ -1283,11 +1305,11 @@ class ApiturnoController extends Controller
 
         }
 
-        // $nuevoToken=$this->obtenerToken();
-        $nuevoToken=[
-            'status' => 'success',
-            'token' => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiY2JiMmZkODc2Nzg4OGQwNDM4ODc2MzQwMjk4MmVjNTRhMDUzZTA5NjE3ZDY2NGViZTIxZmNhNGY5ZTQ4NjEyZjdjOWMzMWY5OGExNjUwNjEiLCJpYXQiOjE2MjU0MTIyMDMsIm5iZiI6MTYyNTQxMjIwMywiZXhwIjoxNjU2OTQ4MjAzLCJzdWIiOiIzMCIsInNjb3BlcyI6W119.fskusCPkWuMPcVN5C3g_htCet2ajvLKjvAV7mAYQbWqMp9p90RlTioFhWdE7VFQyuQAz7hDxbED4WWmNFdyoyRIwoTM90YWf_rW0SsinNBUiPuRMmwD3amYH9ZHXtDHie_TSkO7wlVrT7olCXwEdP8Gt-9eyc8l4IDnqCpIZTi-9OvgDKdvIVByhld9Dn4rNrjhYG7qRxpwJNZPGs8bI1RrUUgoCSAolEMCSt3l0NObHwEnouDhxO8qWqxfgFzm6esrcAkXLbRxkVtkPwO9FTFKMpiy1W3_lUTuxK7EmcZcsxJ0syGFsf47ChC7P9KwCujeHsWvIqfEZRg5l86jjrkI_fAam-liLe79gvj8fBL8ihu6UZFJfxvwjhZ_ZyeZqFVeOW1i-bY3yCsxMIXyrb2ux07pvMUke4jLEd-o_PmIH_ZsFdJMfB21ERo6f0ZxW-cwwVlGuE6R4WcqInR0Ml77soUts7xQiwtmVEBF3oKns_WC4uoURtR9zQSh2j4pIZi5cJPBpDQ7w0Mg3Mx3KtFpfN-xnazscQAHHpoSc4UGOXUs0NPpiK275NivrHI9KkzDZLO2fgula6fdFPrzzzAJHRdIqXgWO7f9LM3XICR_GDUgJI1Ie0k_XrkBspfORgBKoTEKYyWWkos4r7csQcbUwExeKXHpLguA4VJttx8Q'
-        ];
+        $nuevoToken=$this->obtenerToken();
+        // $nuevoToken=[
+        //     'status' => 'success',
+        //     'token' => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiYWRmZDg4MGNjMzA2MjkyMTY3NWQ5NWQzNjFjY2ViOWJmNjIxZWRiNGE3Njk1YTIzNzRjMTYyMzgzNDk0YTJmZmEyZjA2NGZhZDFkMjRmMjQiLCJpYXQiOjE2MjU0MDEyODIsIm5iZiI6MTYyNTQwMTI4MiwiZXhwIjoxNjU2OTM3MjgyLCJzdWIiOiI1Iiwic2NvcGVzIjpbXX0.J5tnKOeZefum5f5vsovdb8O0TRjWHZocbSJvuN3G0HyDkRWiCE0grP_eRmX0XHPLr8WlZ9V1g7KUtrVGPiGQ3UsVv4QPV4ntava_Yju68lcU1qW3I4nOT1NcTdbu6sP3Uov_kNpFpqwGV8T8qivgdUIG0R3kUfuSK-2oYlUemPeVtvLaHj5HHXLu6uPQnw-_M97jJ8q65YXAcxiUrHKbu2Hvws4vtV8UkDwXJfWx3TK7p-PiiinTBgT1QgE5_F1ZAR6ikvnJ3T1jhRzvZrW2PatWUJbA1EFyu_qUAi24wbP1B__w6_8dAW7PA3_-RHrphIJTuEKvfsDAHOWhPUq293GP2cZWry4EAW50pgCZDxh_bE_b4g5sYVptc44ALFtoiQhz8vD58lM3zxfVWxTh6c8uNzhbmjVjvQJl4kgZYEkzgfPxHqTC418A_bZSbb0t6RxbqSJmZYg8RVvaBMyTSSpz5m9hFPT8WqgVdKLeIe3USNDVM-Qi_Rd74id5UixVnKt4zulXRgYiWKvr2AQY9pzIeyrMeHEvj53FV8zJpBkKsyHyq0zkr0kLgst5rPccweYmYco51VBJofpuFMT7nLiu8jyL6Y-6Y4OnS8X1VSXSozz8HmR6n7sWOlEPsZbo41IObFwYzsCtcDoTM9TP6gZIJIbdyUf1_vMoqyH9CR4'
+        // ];
 
         if($nuevoToken["status"]=='failed'){
 
@@ -1306,7 +1328,7 @@ class ApiturnoController extends Controller
 
         try{
 
-            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
+            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
 
             if( $response_rto->getStatusCode()!=200){
 
