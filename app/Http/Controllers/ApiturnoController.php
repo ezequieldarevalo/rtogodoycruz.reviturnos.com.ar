@@ -283,7 +283,7 @@ class ApiturnoController extends Controller
         $nuevoToken=$this->obtenerToken();
         // $nuevoToken=[
         //     'status' => 'success',
-        //     'token' => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiY2JiMmZkODc2Nzg4OGQwNDM4ODc2MzQwMjk4MmVjNTRhMDUzZTA5NjE3ZDY2NGViZTIxZmNhNGY5ZTQ4NjEyZjdjOWMzMWY5OGExNjUwNjEiLCJpYXQiOjE2MjU0MTIyMDMsIm5iZiI6MTYyNTQxMjIwMywiZXhwIjoxNjU2OTQ4MjAzLCJzdWIiOiIzMCIsInNjb3BlcyI6W119.fskusCPkWuMPcVN5C3g_htCet2ajvLKjvAV7mAYQbWqMp9p90RlTioFhWdE7VFQyuQAz7hDxbED4WWmNFdyoyRIwoTM90YWf_rW0SsinNBUiPuRMmwD3amYH9ZHXtDHie_TSkO7wlVrT7olCXwEdP8Gt-9eyc8l4IDnqCpIZTi-9OvgDKdvIVByhld9Dn4rNrjhYG7qRxpwJNZPGs8bI1RrUUgoCSAolEMCSt3l0NObHwEnouDhxO8qWqxfgFzm6esrcAkXLbRxkVtkPwO9FTFKMpiy1W3_lUTuxK7EmcZcsxJ0syGFsf47ChC7P9KwCujeHsWvIqfEZRg5l86jjrkI_fAam-liLe79gvj8fBL8ihu6UZFJfxvwjhZ_ZyeZqFVeOW1i-bY3yCsxMIXyrb2ux07pvMUke4jLEd-o_PmIH_ZsFdJMfB21ERo6f0ZxW-cwwVlGuE6R4WcqInR0Ml77soUts7xQiwtmVEBF3oKns_WC4uoURtR9zQSh2j4pIZi5cJPBpDQ7w0Mg3Mx3KtFpfN-xnazscQAHHpoSc4UGOXUs0NPpiK275NivrHI9KkzDZLO2fgula6fdFPrzzzAJHRdIqXgWO7f9LM3XICR_GDUgJI1Ie0k_XrkBspfORgBKoTEKYyWWkos4r7csQcbUwExeKXHpLguA4VJttx8Q'
+        //     'token' => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiYWRmZDg4MGNjMzA2MjkyMTY3NWQ5NWQzNjFjY2ViOWJmNjIxZWRiNGE3Njk1YTIzNzRjMTYyMzgzNDk0YTJmZmEyZjA2NGZhZDFkMjRmMjQiLCJpYXQiOjE2MjU0MDEyODIsIm5iZiI6MTYyNTQwMTI4MiwiZXhwIjoxNjU2OTM3MjgyLCJzdWIiOiI1Iiwic2NvcGVzIjpbXX0.J5tnKOeZefum5f5vsovdb8O0TRjWHZocbSJvuN3G0HyDkRWiCE0grP_eRmX0XHPLr8WlZ9V1g7KUtrVGPiGQ3UsVv4QPV4ntava_Yju68lcU1qW3I4nOT1NcTdbu6sP3Uov_kNpFpqwGV8T8qivgdUIG0R3kUfuSK-2oYlUemPeVtvLaHj5HHXLu6uPQnw-_M97jJ8q65YXAcxiUrHKbu2Hvws4vtV8UkDwXJfWx3TK7p-PiiinTBgT1QgE5_F1ZAR6ikvnJ3T1jhRzvZrW2PatWUJbA1EFyu_qUAi24wbP1B__w6_8dAW7PA3_-RHrphIJTuEKvfsDAHOWhPUq293GP2cZWry4EAW50pgCZDxh_bE_b4g5sYVptc44ALFtoiQhz8vD58lM3zxfVWxTh6c8uNzhbmjVjvQJl4kgZYEkzgfPxHqTC418A_bZSbb0t6RxbqSJmZYg8RVvaBMyTSSpz5m9hFPT8WqgVdKLeIe3USNDVM-Qi_Rd74id5UixVnKt4zulXRgYiWKvr2AQY9pzIeyrMeHEvj53FV8zJpBkKsyHyq0zkr0kLgst5rPccweYmYco51VBJofpuFMT7nLiu8jyL6Y-6Y4OnS8X1VSXSozz8HmR6n7sWOlEPsZbo41IObFwYzsCtcDoTM9TP6gZIJIbdyUf1_vMoqyH9CR4'
         // ];
 
 
@@ -304,7 +304,7 @@ class ApiturnoController extends Controller
         // ejecuto la consulta del turno a la plataforma RTO
         try{
 
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/turno',$data);
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/turno',$data);
         }catch(\Exception $e){
                 
             $respuestaError=[
