@@ -38,8 +38,9 @@ html{
         <span class="titulo-dato">Hora:</span><span class="dato">&nbsp; {{ $turnomail->hora }}</span><br/>
         <span class="titulo-dato">Id de turno:</span><span class="dato">&nbsp; {{ $turnomail->id }}</span><br/>
 
-		<span class="dato">Recuerde que cuenta con 12hs para realizar el pago, de lo contrario se deshabilitará.</span><br/>
-        <span class="dato">Para realizar el pago si no lo hizo, puedo hacerlo haciendo <a href="{{ $turnomail->url_pago }}">click aquí</a>.</span>
+		<span class="dato">Recuerde que a partir de este momento cuenta con 48hs para realizar el pago, de lo contrario, será automáticamente cancelado.</span><br/>
+        <span class="dato">Si eligió abonar con Rapipago o Pago fácil, debe asistir con el comprobante del pago.</span><br/>
+        <span class="dato">Para realizar el pago si no lo hizo, puede hacerlo haciendo <a href="{{ $turnomail->url_pago }}">click aquí</a>.</span>
 
     </div>
 </body>
