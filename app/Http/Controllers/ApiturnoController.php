@@ -204,7 +204,7 @@ class ApiturnoController extends Controller
 
         // $dia_actual=date("Y-m-d");
         $dia_actual=new DateTime();
-        $primer_dia_turnos=$dia_actual->modify('+2 days');
+        // $primer_dia_turnos=$dia_actual->modify('+2 days');
 
         $conditions=[
             "tipo_vehiculo" => $vehiculo->tipo_vehiculo
@@ -220,7 +220,7 @@ class ApiturnoController extends Controller
         $conditions=[
             ['estado','=','D'],
             ['origen','=','T'],
-            ['fecha','>=',$primer_dia_turnos]
+            ['fecha','>=',$dia_actual]
         ];
 
         $fecha_actual=new DateTime();
@@ -228,8 +228,8 @@ class ApiturnoController extends Controller
         $conditions2=[
             ['estado','=','R'],
             ['origen','=','T'],
-            ['fecha','>=',$primer_dia_turnos],
-            ['vencimiento','<',$primer_dia_turnos]            
+            ['fecha','>=',$dia_actual],
+            ['vencimiento','<',$dia_actual]            
         ];
         
         $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->get();
@@ -363,7 +363,7 @@ class ApiturnoController extends Controller
 
         // $dia_actual=date("Y-m-d");
         $dia_actual=new DateTime();
-        $primer_dia_turnos=$dia_actual->modify('+2 days');
+        // $primer_dia_turnos=$dia_actual->modify('+2 days');
 
         $conditions=[
             "tipo_vehiculo" => $vehiculo->tipo_vehiculo
@@ -379,7 +379,7 @@ class ApiturnoController extends Controller
         $conditions=[
             ['estado','=','D'],
             ['origen','=','T'],
-            ['fecha','>=',$primer_dia_turnos]
+            ['fecha','>=',$dia_actual]
         ];
 
         $fecha_actual=new DateTime();
@@ -387,8 +387,8 @@ class ApiturnoController extends Controller
         $conditions2=[
             ['estado','=','R'],
             ['origen','=','T'],
-            ['fecha','>=',$primer_dia_turnos],
-            ['vencimiento','<',$primer_dia_turnos]            
+            ['fecha','>=',$dia_actual],
+            ['vencimiento','<',$dia_actual]            
         ];
         
         $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->orderBy('hora')->get();
