@@ -625,13 +625,13 @@ class ApiturnoController extends Controller
 
 
     
-        $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
-        // $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
+        // $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
+        $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
             
         // conseguir token yacare
-        // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
+        $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
         
-        $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDg5IiwiaWF0IjoxNjEzNzYzNjI4LCJleHAiOjE2NDUzMjA1ODAsIk9JRCI6NDQ4OSwiVElEIjoiWUFDQVJFX0FQSSJ9.wpkLqfoHe5l6d2seKI3cvdDQj1A4-B2WXcxNC08fTC-1b_WvxONdn61TwSF2FF81X_BngS3R0gvpaw5RV6s44g';
+        // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDg5IiwiaWF0IjoxNjEzNzYzNjI4LCJleHAiOjE2NDUzMjA1ODAsIk9JRCI6NDQ4OSwiVElEIjoiWUFDQVJFX0FQSSJ9.wpkLqfoHe5l6d2seKI3cvdDQj1A4-B2WXcxNC08fTC-1b_WvxONdn61TwSF2FF81X_BngS3R0gvpaw5RV6s44g';
         
         $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
 
@@ -652,7 +652,7 @@ class ApiturnoController extends Controller
                 "unitPrice" => $precio_float
                 ]
             ],
-            "notificationURL" => "https://centroeste.reviturnos.com.ar/api/auth/notif",
+            "notificationURL" => "https://rtogodoycruz.reviturnos.com.ar/api/auth/notif",
             "redirectURL" => "https://turnos.rtorivadavia.com.ar/confirmado",
             "reference" => $referencia
         ];
@@ -1066,8 +1066,8 @@ class ApiturnoController extends Controller
 
         if($plataforma_pago=='yacare'){
         
-            $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
-            // $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
+            // $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
+            $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
                 
             // conseguir token yacare
             // $token_request_desa='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
@@ -1090,7 +1090,7 @@ class ApiturnoController extends Controller
                     "unitPrice" => $precio_float
                     ]
                 ],
-                "notificationURL" => "https://centroeste.reviturnos.com.ar/api/auth/notif",
+                "notificationURL" => "https://rtogodoycruz.reviturnos.com.ar/api/auth/notif",
                 "redirectURL" => "https://turnos.reviturnos.com.ar/confirmed/rivadavia",
                 "reference" => $referencia
             ];
@@ -1136,8 +1136,10 @@ class ApiturnoController extends Controller
             $dia_vencimiento_mp=$fecha_vencimiento_aux_mp->format('Y-m-d');
             $hora_vencimiento_mp=$fecha_vencimiento_aux_mp->format('H:i:s');
             $fecha_vencimiento_mp=$dia_vencimiento_mp.'T'.$hora_vencimiento_mp.'.000-00:00';
-            $url_request="https://api.mercadopago.com/checkout/preferences";
-            $token_request="Bearer APP_USR-5150441327591477-070520-9c02fe96f0c292d0fa40340ab964b8bc-15129767";
+            // $url_request="https://api.mercadopago.com/checkout/preferences";
+            // $token_request="Bearer APP_USR-5150441327591477-070520-9c02fe96f0c292d0fa40340ab964b8bc-15129767";
+            $url_request="https://api.test.mercadopago.com/checkout/preferences";
+            $token_request="Bearer APP_USR-515044132759147dfsdf7-070520-9c02fe96f0c292d0fa40340ab964b8bc-15129767";
 
             $headers_mercadopago=[
                 'Authorization' => $token_request
@@ -1145,7 +1147,7 @@ class ApiturnoController extends Controller
 
             $datos_post=[
                 "external_reference" => $referencia,
-                "notification_url" => "https://centroeste.reviturnos.com.ar/api/auth/notifMeli",
+                "notification_url" => "https://rtogodoycruz.reviturnos.com.ar/api/auth/notifMeli",
                 "payer" => [
                     "name" => $datos_turno["nombre"],
                     "surname" => $datos_turno["apellido"],

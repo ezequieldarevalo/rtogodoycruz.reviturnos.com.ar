@@ -189,16 +189,17 @@ class PagosController extends Controller
         
         // url produccion
         //$url_request='https://api.yacare.com/v1/operations-managment/operations';
-        $url_request='https://api.yacare.com/v1/operations-managment/operations?transaction='.$id_cobro;
+        // $url_request='https://api.yacare.com/v1/operations-managment/operations?transaction='.$id_cobro;
+        $url_request='https://api.core.yacare.com/v1/operations-managment/operations?transaction='.$id_cobro;
 
         // url desarrollo
         // $url_request='https://core.demo.yacare.com/api-homologacion/v1/operations-managment/operations?transaction='.$id_cobro;
         
         // token yacare produccion
-        $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDg5IiwiaWF0IjoxNjEzNzYzNjI4LCJleHAiOjE2NDUzMjA1ODAsIk9JRCI6NDQ4OSwiVElEIjoiWUFDQVJFX0FQSSJ9.wpkLqfoHe5l6d2seKI3cvdDQj1A4-B2WXcxNC08fTC-1b_WvxONdn61TwSF2FF81X_BngS3R0gvpaw5RV6s44g';
+        // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDg5IiwiaWF0IjoxNjEzNzYzNjI4LCJleHAiOjE2NDUzMjA1ODAsIk9JRCI6NDQ4OSwiVElEIjoiWUFDQVJFX0FQSSJ9.wpkLqfoHe5l6d2seKI3cvdDQj1A4-B2WXcxNC08fTC-1b_WvxONdn61TwSF2FF81X_BngS3R0gvpaw5RV6s44g';
         
         // token yacare desarrollo
-        // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
+        $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
             
 
         $headers_yacare=[
@@ -511,8 +512,10 @@ class PagosController extends Controller
 
 
         // VOY A BUSCAR LOS DATOS DEL PAGO
-        $url_preffix='https://api.mercadopago.com/v1/payments/';
-        $url_access_code='APP_USR-5150441327591477-070520-9c02fe96f0c292d0fa40340ab964b8bc-15129767';
+        // $url_preffix='https://api.mercadopago.com/v1/payments/';
+        // $url_access_code='APP_USR-5150441327591477-070520-9c02fe96f0c292d0fa40340ab964b8bc-15129767';
+        $url_preffix='https://api.test.mercadopago.com/v1/payments/';
+        $url_access_code='APP_USR-5150441327591477-070520-9c02fe96f0c292d0fadfasdfdsa40340ab964b8bc-15129767';
         $url_request=$url_preffix.$id_cobro.'?access_token='.$url_access_code;
 
         try{
