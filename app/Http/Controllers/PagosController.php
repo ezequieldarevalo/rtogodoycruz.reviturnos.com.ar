@@ -45,8 +45,8 @@ class PagosController extends Controller
 
 
             $data=[
-                 'email' => 'turnos@rtorivadavia.com.ar',
-                 'password' => '20ReviRv'
+                 'email' => 'rtogodoycruz@gmail.com',
+                 'password' => 'Rto93228370330'
             ];
 
             try{
