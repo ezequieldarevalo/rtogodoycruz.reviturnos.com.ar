@@ -37,7 +37,7 @@ class PagoRtoM extends Mailable
      */
     public function build()
     {
-        return $this->from('turnos@rtorivadavia.com.ar','RTO Rivadavia')
+        return $this->from('turnos@rtogodoycruz.com.ar','RTO Godoy Cruz')
             ->subject('Turno RTO Mendoza')->view('emails.pagoturno');
     }
 }

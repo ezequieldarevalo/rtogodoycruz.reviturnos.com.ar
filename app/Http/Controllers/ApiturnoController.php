@@ -653,7 +653,7 @@ class ApiturnoController extends Controller
                 ]
             ],
             "notificationURL" => "https://rtogodoycruz.reviturnos.com.ar/api/auth/notif",
-            "redirectURL" => "https://turnos.rtorivadavia.com.ar/confirmado",
+            "redirectURL" => "https://turnosrtogc.reviturnos.com.ar/confirmado",
             "reference" => $referencia
         ];
 
@@ -1091,7 +1091,7 @@ class ApiturnoController extends Controller
                     ]
                 ],
                 "notificationURL" => "https://rtogodoycruz.reviturnos.com.ar/api/auth/notif",
-                "redirectURL" => "https://turnos.reviturnos.com.ar/confirmed/rivadavia",
+                "redirectURL" => "https://turnosrtogc.reviturnos.com.ar/confirmed",
                 "reference" => $referencia
             ];
             
