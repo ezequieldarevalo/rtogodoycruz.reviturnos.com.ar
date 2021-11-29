@@ -53,7 +53,7 @@ class ApiturnoController extends Controller
 
             try{
                 
-                $response = Http::withOptions(['verify' => false])->post('https://rto.renzovinci.com.ar/api/v1/auth/login',$data);
+                $response = Http::withOptions(['verify' => false])->post('https://rto.mendoza.gov.ar/api/v1/auth/login',$data);
 
                 if( $response->getStatusCode()!=200){
 
@@ -145,7 +145,7 @@ class ApiturnoController extends Controller
         // ejecuto la consulta del turno a la plataforma RTO
         try{
 
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/turno',$data);
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/turno',$data);
 
         }catch(\Exception $e){
                 
@@ -304,7 +304,7 @@ class ApiturnoController extends Controller
         // ejecuto la consulta del turno a la plataforma RTO
         try{
 
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/turno',$data);
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/turno',$data);
         }catch(\Exception $e){
                 
             $respuestaError=[
@@ -465,7 +465,7 @@ class ApiturnoController extends Controller
 
         try{
 
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/turno',$data);
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/turno',$data);
 
         }catch(\Exception $e){
                 
@@ -823,7 +823,7 @@ class ApiturnoController extends Controller
 
         try{
 
-            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
+            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
 
             if( $response_rto->getStatusCode()!=200){
 
@@ -963,7 +963,7 @@ class ApiturnoController extends Controller
 
         try{
 
-            $res_info_turno = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/turno',$data);
+            $res_info_turno = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/turno',$data);
 
         }catch(\Exception $e){
                 
@@ -1330,7 +1330,7 @@ class ApiturnoController extends Controller
 
         try{
 
-            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.renzovinci.com.ar/api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
+            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
 
             if( $response_rto->getStatusCode()!=200){
 
