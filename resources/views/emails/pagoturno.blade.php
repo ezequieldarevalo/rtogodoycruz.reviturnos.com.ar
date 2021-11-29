@@ -28,7 +28,7 @@ html{
 
 <body>
     <div class="cont">
-        <span class="dato">Su turno para realizar la RTO en la planta de Rivadavia de Centro Este ha sido confirmado.</span>
+        <span class="dato">Su turno para realizar la RTO en la planta Godoy Cruz RTVO Centro Express ha sido confirmado.</span>
         <br/><br/>
         <div class="titulo-general">Detalles de su turno</div>
         
