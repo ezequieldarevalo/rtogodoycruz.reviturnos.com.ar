@@ -28,7 +28,7 @@ html{
 
 <body>
     <div class="cont">
-        <span class="dato">Usted acaba de reservar un turno para realizar la RTO en la planta Centro Este - Rivadavia</span>
+        <span class="dato">Usted acaba de reservar un turno para realizar la RTO en la planta RTVO Centro Express - Godoy Cruz</span>
         <br/><br/>
         <div class="titulo-general">Detalles de su turno</div>
         
@@ -38,8 +38,7 @@ html{
         <span class="titulo-dato">Hora:</span><span class="dato">&nbsp; {{ $turnomail->hora }}</span><br/>
         <span class="titulo-dato">Id de turno:</span><span class="dato">&nbsp; {{ $turnomail->id }}</span><br/>
 
-		<span class="dato">Recuerde que a partir de este momento cuenta con 48hs para realizar el pago, de lo contrario, será automáticamente cancelado.</span><br/>
-        <span class="dato">Si eligió abonar con Rapipago o Pago fácil, debe asistir con el comprobante del pago.</span><br/>
+		<span class="dato">Recuerde que a partir de este momento cuenta con 12hs para realizar el pago, de lo contrario, será automáticamente cancelado.</span><br/>
         <span class="dato">Para realizar el pago si no lo hizo, puede hacerlo haciendo <a href="{{ $turnomail->url_pago }}">click aquí</a>.</span>
 
     </div>
