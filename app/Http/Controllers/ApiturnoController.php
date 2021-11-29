@@ -625,13 +625,13 @@ class ApiturnoController extends Controller
 
 
     
-        // $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
-        $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
+        $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
+        // $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
             
         // conseguir token yacare
-        $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
+        // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
         
-        // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDg5IiwiaWF0IjoxNjEzNzYzNjI4LCJleHAiOjE2NDUzMjA1ODAsIk9JRCI6NDQ4OSwiVElEIjoiWUFDQVJFX0FQSSJ9.wpkLqfoHe5l6d2seKI3cvdDQj1A4-B2WXcxNC08fTC-1b_WvxONdn61TwSF2FF81X_BngS3R0gvpaw5RV6s44g';
+        $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMDc4OSIsImlhdCI6MTYzNzkzMzMwOCwiZXhwIjoxNjY5NDkwMjYwLCJPSUQiOjEwNzg5LCJUSUQiOiJZQUNBUkVfQVBJIn0.66FWRwSDonmK-5GiIDOPMSDSnLL0ZB4PI5m8J8mrmFJQsbqgQwLUB7voz2AqxdBOHEYTjuraitmSEXxvbHNsIg';
         
         $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
 
@@ -1066,13 +1066,13 @@ class ApiturnoController extends Controller
 
         if($plataforma_pago=='yacare'){
         
-            // $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
-            $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
+            $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
+            // $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
                 
             // conseguir token yacare
             // $token_request_desa='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
                 
-            $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI0NDg5IiwiaWF0IjoxNjEzNzYzNjI4LCJleHAiOjE2NDUzMjA1ODAsIk9JRCI6NDQ4OSwiVElEIjoiWUFDQVJFX0FQSSJ9.wpkLqfoHe5l6d2seKI3cvdDQj1A4-B2WXcxNC08fTC-1b_WvxONdn61TwSF2FF81X_BngS3R0gvpaw5RV6s44g';
+            $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMDc4OSIsImlhdCI6MTYzNzkzMzMwOCwiZXhwIjoxNjY5NDkwMjYwLCJPSUQiOjEwNzg5LCJUSUQiOiJZQUNBUkVfQVBJIn0.66FWRwSDonmK-5GiIDOPMSDSnLL0ZB4PI5m8J8mrmFJQsbqgQwLUB7voz2AqxdBOHEYTjuraitmSEXxvbHNsIg';
             
             $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
 
