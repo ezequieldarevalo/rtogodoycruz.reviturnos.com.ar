@@ -449,7 +449,7 @@ class AdminController extends Controller
 
         }
 
-        if(!($turno_nuevo->estado=="D" || ($turno_nuevo->estado=="R" && $turno_nuevo->vencimiento<$fecha_actual))){
+        if(!($turno_nuevo->estado=="D")){
 	        
             $respuestaError=[
                         'status' => 'failed',
