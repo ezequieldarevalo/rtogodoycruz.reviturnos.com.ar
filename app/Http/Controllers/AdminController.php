@@ -462,6 +462,10 @@ class AdminController extends Controller
 
         }
 
+        if($turno_nuevo->estado=="R"){
+            $borrar_datos_turno_vencido=Datosturno::where('id_turno',$turno_nuevo->id)->delete();
+        }
+
         $datos_futuro_turno=[
             'estado' => $turno_anterior->estado,
             'id_cobro_yac' => $turno_anterior->id_cobro_yac
