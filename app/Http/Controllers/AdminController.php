@@ -449,7 +449,9 @@ class AdminController extends Controller
 
         }
 
-        if(!($turno_nuevo->estado=="D")){
+        $fecha_actual=new DateTime();
+
+        if(!($turno_nuevo->estado=="D" || ($turno_nuevo->estado=="R" && $turno_nuevo->vencimiento<$fecha_actual))){
 	        
             $respuestaError=[
                         'status' => 'failed',
@@ -722,8 +724,7 @@ class AdminController extends Controller
             ['vencimiento','<',$fecha_actual]            
         ];
         
-        // $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->orWhere($conditions2)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->get();
-        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->get();
+        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->orWhere($conditions2)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->get();
 
         $respuesta=[
             'status' => 'success',
