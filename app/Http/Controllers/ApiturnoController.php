@@ -217,14 +217,14 @@ class ApiturnoController extends Controller
             array_push($lineas_turnos,$linea->id);
         }
 
+        $fecha_actual=new DateTime();
+        $fecha_actual_formateada=$fecha_actual->format('Y-m-d');
+
         $conditions=[
             ['estado','=','D'],
             ['origen','=','T'],
             ['fecha','>=',$fecha_actual_formateada]
         ];
-
-        $fecha_actual=new DateTime();
-        $fecha_actual_formateada=$fecha_actual->format('Y-m-d');
 
         $conditions2=[
             ['estado','=','R'],
