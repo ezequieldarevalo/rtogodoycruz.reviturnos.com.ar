@@ -220,15 +220,16 @@ class ApiturnoController extends Controller
         $conditions=[
             ['estado','=','D'],
             ['origen','=','T'],
-            ['fecha','>=',$dia_actual]
+            ['fecha','>=',$fecha_actual_formateada]
         ];
 
         $fecha_actual=new DateTime();
+        $fecha_actual_formateada=$fecha_actual->format('Y-m-d');
 
         $conditions2=[
             ['estado','=','R'],
             ['origen','=','T'],
-            ['fecha','>=',$dia_actual],
+            ['fecha','>=',$fecha_actual_formateada],
             ['vencimiento','<',$dia_actual]            
         ];
         
