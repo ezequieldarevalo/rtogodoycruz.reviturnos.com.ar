@@ -657,11 +657,6 @@ class ApiturnoController extends Controller
             "redirectURL" => "https://turnosrtogc.reviturnos.com.ar/confirmado",
             "reference" => $referencia
         ];
-
-        $prueba=[
-            'datos' => $datos_post
-        ];
-        return response()->json($prueba,200);
             
         
         $headers_yacare=[
