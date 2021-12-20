@@ -658,7 +658,10 @@ class ApiturnoController extends Controller
             "reference" => $referencia
         ];
 
-        
+        $prueba=[
+            'datos' => $datos_post
+        ];
+        return response()->json($prueba,200);
             
         
         $headers_yacare=[
@@ -1086,7 +1089,7 @@ class ApiturnoController extends Controller
                 "expirationTime" => 2880,
                 "items" => [
                     [
-                    "name" => "Turno RTO Rivadavia",
+                    "name" => "Turno RTO Godoy Cruz",
                     "quantity" => "1",
                     "unitPrice" => $precio_float
                     ]
