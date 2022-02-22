@@ -1138,7 +1138,7 @@ class ApiturnoController extends Controller
             // $url_request="https://api.mercadopago.com/checkout/preferences";
             // $token_request="Bearer APP_USR-5150441327591477-070520-9c02fe96f0c292d0fa40340ab964b8bc-15129767";
             $url_request="https://api.mercadopago.com/checkout/preferences";
-            $token_request="Bearer TEST-7334243394030446-071122-092109657c14d1b849c79ab24c33e7d0-32577613";
+            $token_request="Bearer TEST-1963147828445709-052222-3ab1f18bc72827756c825693867919c9-32577613";
 
             $headers_mercadopago=[
                 'Authorization' => $token_request
