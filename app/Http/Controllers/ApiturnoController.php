@@ -1065,13 +1065,13 @@ class ApiturnoController extends Controller
 
         if($plataforma_pago=='yacare'){
         
-            $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
-            // $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
+            // $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
+            $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
                 
             // conseguir token yacare
-            // $token_request_desa='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
+            $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
                 
-            $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMDc4OSIsImlhdCI6MTYzNzkzMzMwOCwiZXhwIjoxNjY5NDkwMjYwLCJPSUQiOjEwNzg5LCJUSUQiOiJZQUNBUkVfQVBJIn0.66FWRwSDonmK-5GiIDOPMSDSnLL0ZB4PI5m8J8mrmFJQsbqgQwLUB7voz2AqxdBOHEYTjuraitmSEXxvbHNsIg';
+            // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMDc4OSIsImlhdCI6MTYzNzkzMzMwOCwiZXhwIjoxNjY5NDkwMjYwLCJPSUQiOjEwNzg5LCJUSUQiOiJZQUNBUkVfQVBJIn0.66FWRwSDonmK-5GiIDOPMSDSnLL0ZB4PI5m8J8mrmFJQsbqgQwLUB7voz2AqxdBOHEYTjuraitmSEXxvbHNsIg';
             
             $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
 
@@ -1137,8 +1137,8 @@ class ApiturnoController extends Controller
             $fecha_vencimiento_mp=$dia_vencimiento_mp.'T'.$hora_vencimiento_mp.'.000-00:00';
             // $url_request="https://api.mercadopago.com/checkout/preferences";
             // $token_request="Bearer APP_USR-5150441327591477-070520-9c02fe96f0c292d0fa40340ab964b8bc-15129767";
-            $url_request="https://api.test.mercadopago.com/checkout/preferences";
-            $token_request="Bearer APP_USR-515044132759147dfsdf7-070520-9c02fe96f0c292d0fa40340ab964b8bc-15129767";
+            $url_request="https://api.mercadopago.com/checkout/preferences";
+            $token_request="Bearer TEST-7334243394030446-071122-092109657c14d1b849c79ab24c33e7d0-32577613";
 
             $headers_mercadopago=[
                 'Authorization' => $token_request
