@@ -1081,7 +1081,7 @@ class ApiturnoController extends Controller
                     "name" => $nombre_completo,
                     "surname" => ""
                 ],
-                "expirationTime" => 2880,
+                "expirationTime" => 120,
                 "items" => [
                     [
                     "name" => "Turno RTO Godoy Cruz",
@@ -1131,7 +1131,7 @@ class ApiturnoController extends Controller
 
         }else{
 
-            $fecha_vencimiento_aux_mp=$fecha_actual->modify('+21 hours');
+            $fecha_vencimiento_aux_mp=$fecha_actual->modify('-1 hours');
             $dia_vencimiento_mp=$fecha_vencimiento_aux_mp->format('Y-m-d');
             $hora_vencimiento_mp=$fecha_vencimiento_aux_mp->format('H:i:s');
             $fecha_vencimiento_mp=$dia_vencimiento_mp.'T'.$hora_vencimiento_mp.'.000-00:00';
@@ -1327,40 +1327,40 @@ class ApiturnoController extends Controller
 
         }
 
-        try{
+        // try{
 
-            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
+        //     $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
 
-            if( $response_rto->getStatusCode()!=200){
+        //     if( $response_rto->getStatusCode()!=200){
 
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo al confirmar turno al RTO",
-                    "fix" => "CONFIRM",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $nro_turno_rto,
-                    "servicio" => "notification"
-                ];
+        //         $error=[
+        //             "tipo" => "CRITICO",
+        //             "descripcion" => "Fallo al confirmar turno al RTO",
+        //             "fix" => "CONFIRM",
+        //             "id_turno" => $turno->id,
+        //             "nro_turno_rto" => $nro_turno_rto,
+        //             "servicio" => "notification"
+        //         ];
 
-                Logerror::insert($error);
+        //         Logerror::insert($error);
                         
-            }
+        //     }
 
-        }catch(\Exception $e){
+        // }catch(\Exception $e){
 
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al confirmar turno al RTO",
-                "fix" => "CONFIRM",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto,
-                "servicio" => "notification"
-            ];
+        //     $error=[
+        //         "tipo" => "CRITICO",
+        //         "descripcion" => "Fallo al confirmar turno al RTO",
+        //         "fix" => "CONFIRM",
+        //         "id_turno" => $turno->id,
+        //         "nro_turno_rto" => $nro_turno_rto,
+        //         "servicio" => "notification"
+        //     ];
 
-            Logerror::insert($error);
+        //     Logerror::insert($error);
                         
 
-        }
+        // }
 
 
         $respuesta=[
