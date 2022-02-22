@@ -134,7 +134,6 @@ class PagosController extends Controller
         // CONSULTO A YACARE LOS DATOS DEL PAGO
         /////////////////////////////////////////////////////////////////////
         // url produccion
-        //$url_request='https://api.yacare.com/v1/operations-managment/operations';
         // $url_request='https://api.yacare.com/v1/operations-managment/operations?transaction='.$id_cobro;
         // url desarrollo
         $url_request='https://core.demo.yacare.com/api-homologacion/v1/operations-managment/operations?transaction='.$id_cobro;
