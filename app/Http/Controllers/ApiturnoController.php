@@ -24,6 +24,16 @@ use Config;
 
 class ApiturnoController extends Controller
 {
+    public $rto_login_url='api/v1/auth/login';
+
+    public $rto_quote_url='api/v1/auth/turno';
+
+    public $rto_quote_confirm_url='api/v1/auth/confirmar';
+
+    public $yacare_payments_url='v1/payment-orders-managment/payment-order';
+
+    public $mp_preferences_url="checkout/preferences";
+
     public function getRtoUrl(){
         return config('rto.url');
     }
@@ -93,7 +103,8 @@ class ApiturnoController extends Controller
                  'password' => 'Rto93228370330'
             ];
             try{
-                $response = Http::withOptions(['verify' => false])->post($this->getRtoUrl()."api/v1/auth/login", $data);
+                $url_request=$this->getRtoUrl().$this->rto_login_url;
+                $response = Http::withOptions(['verify' => false])->post($url_request, $data);
                 if($response->getStatusCode()!=200){
                     $respuesta=[
                         'status' => 'failed',
@@ -158,7 +169,8 @@ class ApiturnoController extends Controller
         ];
         // ejecuto la consulta del turno a la plataforma RTO
         try{
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/turno',$data);
+            $request_url=$this->getRtoUrl().$this->rto_quote_url;
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,$data);
         }catch(\Exception $e){   
             $respuestaError=[
                 'status' => 'failed',
@@ -271,7 +283,8 @@ class ApiturnoController extends Controller
         ];
         // ejecuto la consulta del turno a la plataforma RTO
         try{
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/turno',$data);
+            $request_url=$this->getRtoUrl().$this->rto_quote_url;
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,$data);
         }catch(\Exception $e){    
             $respuestaError=[
                 'status' => 'failed',
@@ -388,7 +401,8 @@ class ApiturnoController extends Controller
             'turno' => $nro_turno_rto
         ];
         try{
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/turno',$data);
+            $request_url=$this->getRtoUrl().$this->rto_quote_url;
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,$data);
         }catch(\Exception $e){    
             $respuestaError=[
                 'status' => 'failed',
@@ -465,7 +479,7 @@ class ApiturnoController extends Controller
         $vehiculo=Precio::where('descripcion',$tipo_vehiculo)->first();
         $precio_float=$vehiculo->precio.'.00';
         $fecha_vencimiento=$fecha_actual->modify('+12 hours');
-        $url_request=$this->getYacareUrl().'v1/payment-orders-managment/payment-order';
+        $url_request=$this->getYacareUrl().$this->yacare_payments_url;
         $token_request=$this->getYacareToken();
         $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
         $referencia=$id_turno.$fecha_actual->format('dmYHis');
@@ -561,7 +575,8 @@ class ApiturnoController extends Controller
             $this->log("CRITICO", "Fallo al obtener token previo a confirmar el turno", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
         }
         try{
-            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
+            $request_url=$this->getRtoUrl().$this->rto_quote_confirm_url;
+            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,array('turno' => $nro_turno_rto));
             if( $response_rto->getStatusCode()!=200){
                 $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
             }
@@ -614,7 +629,8 @@ class ApiturnoController extends Controller
             'turno' => $nro_turno_rto
         ];
         try{
-            $res_info_turno = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/turno',$data);
+            $request_url=$this->getRtoUrl().$this->rto_quote_url;
+            $res_info_turno = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,$data);
         }catch(\Exception $e){   
             $respuestaError=[
                 'reason' => 'RTO_NOT_WORKING'
@@ -682,7 +698,7 @@ class ApiturnoController extends Controller
         $fecha_vencimiento=$fecha_actual->modify('+5 minutes');
         $referencia=$id_turno.$fecha_actual->format('dmYHis').$datos_turno["patente"];
         if($plataforma_pago=='yacare'){
-            $url_request=$this->getYacareUrl()."payment-orders-managment/payment-order";
+            $request_url=$this->getYacareUrl()."payment-orders-managment/payment-order";
             $token_request=$this->getYacareToken();
             $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
             $datos_post=[
@@ -707,7 +723,7 @@ class ApiturnoController extends Controller
                 'Authorization' => $token_request
             ];
             try{
-                $res_yacare = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
+                $res_yacare = Http::withHeaders($headers_yacare)->post($request_url,$datos_post);
             }catch(\Exception $e){
                 $this->log("YACARE", "Fallo la solicitud de pago", "NA", $turno->id, $nro_turno_rto, "solicitarTurno");
             }
@@ -724,10 +740,9 @@ class ApiturnoController extends Controller
             $dia_vencimiento_mp=$fecha_vencimiento_aux_mp->format('Y-m-d');
             $hora_vencimiento_mp=$fecha_vencimiento_aux_mp->format('H:i:s');
             $fecha_vencimiento_mp=$dia_vencimiento_mp.'T'.$hora_vencimiento_mp.'.000-00:00';
-            $url_request=$this->getMPUrl()."checkout/preferences";
-            $token_request="Bearer ".$this->getMPToken();
+            $request_url=$this->getMPUrl().$this->mp_preferences_url;
             $headers_mercadopago=[
-                'Authorization' => $token_request
+                'Authorization' => "Bearer ".$this->getMPToken()
             ];
             $datos_post=[
                 "external_reference" => $referencia,
@@ -771,7 +786,7 @@ class ApiturnoController extends Controller
                 "expiration_date_to"=> $fecha_vencimiento_mp
             ];
             try{
-                $res_mp = Http::withHeaders($headers_mercadopago)->post($url_request,$datos_post);
+                $res_mp = Http::withHeaders($headers_mercadopago)->post($request_url,$datos_post);
             }catch(\Exception $e){
                 $this->log("MERCADO PAGO", "Fallo la solicitud de pago", "na", $turno->id, $nro_turno_rto, "solicitarTurno");
             }
@@ -844,7 +859,8 @@ class ApiturnoController extends Controller
         }
         if($this->getRtoConfirmQuotes()){
             try{
-                $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
+                $request_url=$this->getRtoUrl().$this->rto_quote_confirm_url;
+                $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,array('turno' => $nro_turno_rto));
                 if( $response_rto->getStatusCode()!=200){
                     $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "notification");
                 }
