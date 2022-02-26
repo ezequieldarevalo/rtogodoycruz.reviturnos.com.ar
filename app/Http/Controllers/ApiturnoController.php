@@ -20,9 +20,57 @@ use DateTime;
 use App\Mail\TurnoRtoM;
 use SteamCondenser\Exceptions\SocketException;
 use Illuminate\Support\Facades\Mail;
+use Config;
 
 class ApiturnoController extends Controller
 {
+    public function getRtoUrl(){
+        return config('rto.url');
+    }
+
+    public function getYacareUrl(){
+        return config('yacare.url');
+    }
+
+    public function getYacareToken(){
+        return config('yacare.token');
+    }
+
+    public function getYacareNotifUrl(){
+        return config('yacare.notif_url');
+    }
+
+    public function getYacareRedirectUrl(){
+        return config('yacare.redirect_url');
+    }
+
+    public function getMPUrl(){
+        return config('mercadopago.url');
+    }
+
+    public function getMPToken(){
+        return config('mercadopago.token');
+    }
+
+    public function getMPNotifUrl(){
+        return config('mercadopago.notif_url');
+    }
+
+    public function getMPRedirectUrl(){
+        return config('mercadopago.redirect_url');
+    }
+
+    public function log($type, $description, $fix, $quote_id, $rto_quote_id, $service ){
+        $error=[
+            "tipo" => $type,
+            "descripcion" => $description,
+            "fix" => $fix,
+            "id_turno" => $quote_id,
+            "nro_turno_rto" => $rto_quote_id,
+            "servicio" => $service
+        ];
+        Logerror::insert($error);
+    }
 
     // funcion que busca el token en la tabla, luego si esta vencido obtiene otro y lo guarda
     public function obtenerToken(){
@@ -41,7 +89,7 @@ class ApiturnoController extends Controller
                  'password' => 'Rto93228370330'
             ];
             try{
-                $response = Http::withOptions(['verify' => false])->post('https://rto.mendoza.gov.ar/api/v1/auth/login',$data);
+                $response = Http::withOptions(['verify' => false])->post($this->getRtoUrl()."api/v1/auth/login", $data);
                 if($response->getStatusCode()!=200){
                     $respuesta=[
                         'status' => 'failed',
@@ -106,7 +154,7 @@ class ApiturnoController extends Controller
         ];
         // ejecuto la consulta del turno a la plataforma RTO
         try{
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/turno',$data);
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/turno',$data);
         }catch(\Exception $e){   
             $respuestaError=[
                 'status' => 'failed',
@@ -190,7 +238,6 @@ class ApiturnoController extends Controller
                 'status' => 'failed',
                 'message' => "Debe enviar datos en formato json"
             ];
-                    
             return response()->json($respuestaError,400);
         }
         // valido que el dato numero de turno sea un entero y se encuentre presente
@@ -220,7 +267,7 @@ class ApiturnoController extends Controller
         ];
         // ejecuto la consulta del turno a la plataforma RTO
         try{
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/turno',$data);
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/turno',$data);
         }catch(\Exception $e){    
             $respuestaError=[
                 'status' => 'failed',
@@ -337,7 +384,7 @@ class ApiturnoController extends Controller
             'turno' => $nro_turno_rto
         ];
         try{
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/turno',$data);
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/turno',$data);
         }catch(\Exception $e){    
             $respuestaError=[
                 'status' => 'failed',
@@ -406,17 +453,16 @@ class ApiturnoController extends Controller
             return response()->json($respuestaError,400);
         }
         $fecha=getDate();
-        if(strlen($fecha["mon"])==1) $mes='0'.$fecha["mon"]; else $mes=$fecha["mon"];
+        if(strlen($fecha["mon"])==1)
+            $mes='0'.$fecha["mon"];
+        else 
+            $mes=$fecha["mon"];
         $dia_actual=$fecha["year"]."-".$mes."-".$fecha["mday"];
         $vehiculo=Precio::where('descripcion',$tipo_vehiculo)->first();
         $precio_float=$vehiculo->precio.'.00';
-        // $fecha_vencimiento=date("d-m-Y",strtotime($dia_actual."+ 12 hours"));
         $fecha_vencimiento=$fecha_actual->modify('+12 hours');
-        $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
-        // $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order'; 
-        // conseguir token yacare
-        // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
-        $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMDc4OSIsImlhdCI6MTYzNzkzMzMwOCwiZXhwIjoxNjY5NDkwMjYwLCJPSUQiOjEwNzg5LCJUSUQiOiJZQUNBUkVfQVBJIn0.66FWRwSDonmK-5GiIDOPMSDSnLL0ZB4PI5m8J8mrmFJQsbqgQwLUB7voz2AqxdBOHEYTjuraitmSEXxvbHNsIg';        
+        $url_request=$this->getYacareUrl().'v1/payment-orders-managment/payment-order';
+        $token_request=$this->getYacareToken();
         $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
         $referencia=$id_turno.$fecha_actual->format('dmYHis');
         $datos_post=[
@@ -433,8 +479,8 @@ class ApiturnoController extends Controller
                 "unitPrice" => $precio_float
                 ]
             ],
-            "notificationURL" => "https://rtogodoycruz.reviturnos.com.ar/api/auth/notif",
-            "redirectURL" => "https://turnosrtogc.reviturnos.com.ar/confirmado",
+            "notificationURL" => $this->getYacareNotifUrl(),
+            "redirectURL" => $this->getYacareRedirectUrl(),
             "reference" => $referencia
         ];
         $headers_yacare=[
@@ -443,14 +489,7 @@ class ApiturnoController extends Controller
         try{
             $response = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
         }catch(\Exception $e){
-            $error=[
-                "tipo" => "YACARE",
-                "descripcion" => "Fallo la solicitud de pago",
-                "fix" => "NA",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto
-            ];
-            Logerror::insert($error);
+            $this->log('YACARE', 'Falló la solicitud de pago', 'NA', $turno->id, $nro_turno_rto);
         }
         if( $response->getStatusCode()!=200){
             $respuestaError=[
@@ -491,29 +530,13 @@ class ApiturnoController extends Controller
         if($turno->estado=="D"){
             $res_guardar_datos=Datosturno::insert($aux_carga_datos_turno);
             if(!$res_guardar_datos){
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo el alta de los datos del turno.",
-                    "fix" => "REVISAR",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $nro_turno_rto,
-                    "servicio" => "solicitarTurno"
-                ];
-                Logerror::insert($error);
+                $this->log("CRITICO", "Fallo el alta de los datos del turno", "REVISAR", $turno->id, $nro_turno_rto, "solicitarTurno");
             }
         }else{
             // voy a tener que hacer update del registro
             $res_actualizar_datos=Datosturno::where('id_turno',$turno->id)->update($aux_carga_datos_turno);
             if(!$res_actualizar_datos){
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo el update de los datos del turno.",
-                    "fix" => "REVISAR",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $nro_turno_rto,
-                    "servicio" => "solicitarTurno"
-                ];
-                Logerror::insert($error);
+                $this->log("CRITICO", "Fallo el update de los datos del turno", "REVISAR", $turno->id, $nro_turno_rto, "solicitarTurno");
             }
         }
         // alta en tabla datos_turno
@@ -527,51 +550,19 @@ class ApiturnoController extends Controller
         try{
             Mail::to($email_solicitud)->send(new TurnoRtoM($datos_mail));
         }catch(\Exception $e){
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al enviar datos del turno al cliente",
-                "fix" => "MAIL",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto,
-                "servicio" => "solicitarTurno"
-            ];
-            Logerror::insert($error);
+            $this->log("CRITICO", "Fallo al enviar datos del turno al cliente", "MAIL", $turno->id, $nro_turno_rto, "solicitarTurno");
         }
         $nuevoToken=$this->obtenerToken();
         if($nuevoToken["status"]=='failed'){
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al obtener token previo a confirmar el turno",
-                "fix" => "CONFIRM",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-            Logerror::insert($error);
+            $this->log("CRITICO", "Fallo al obtener token previo a confirmar el turno", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
         }
         try{
-            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
+            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
             if( $response_rto->getStatusCode()!=200){
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo al confirmar turno al RTO",
-                    "fix" => "CONFIRM",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $nro_turno_rto,
-                    "servicio" => "notification"
-                ];
-                Logerror::insert($error);      
+                $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
             }
         }catch(\Exception $e){
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al confirmar turno al RTO",
-                "fix" => "CONFIRM",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto,
-                "servicio" => "notification"
-            ];
-            Logerror::insert($error);
+            $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
         }
         $respuesta=[
                 'status' => 'OK',
@@ -619,7 +610,7 @@ class ApiturnoController extends Controller
             'turno' => $nro_turno_rto
         ];
         try{
-            $res_info_turno = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/turno',$data);
+            $res_info_turno = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/turno',$data);
         }catch(\Exception $e){   
             $respuestaError=[
                 'reason' => 'RTO_NOT_WORKING'
@@ -684,15 +675,11 @@ class ApiturnoController extends Controller
         $vehiculo=Precio::where('descripcion',$tipo_vehiculo)->first();
         $precio_float=$vehiculo->precio.'.00';
         // $fecha_vencimiento=date("d-m-Y",strtotime($dia_actual."+ 12 hours"));
-        $fecha_vencimiento=$fecha_actual->modify('+2 days');
+        $fecha_vencimiento=$fecha_actual->modify('+5 minutes');
         $referencia=$id_turno.$fecha_actual->format('dmYHis').$datos_turno["patente"];
-        // $referencia=$id_turno.$fecha_actual->format('dmYHis');
         if($plataforma_pago=='yacare'){
-            // $url_request='https://api.yacare.com/v1/payment-orders-managment/payment-order';
-            $url_request='https://core.demo.yacare.com/api-homologacion/v1/payment-orders-managment/payment-order';
-            // conseguir token yacare
-            $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
-            // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMDc4OSIsImlhdCI6MTYzNzkzMzMwOCwiZXhwIjoxNjY5NDkwMjYwLCJPSUQiOjEwNzg5LCJUSUQiOiJZQUNBUkVfQVBJIn0.66FWRwSDonmK-5GiIDOPMSDSnLL0ZB4PI5m8J8mrmFJQsbqgQwLUB7voz2AqxdBOHEYTjuraitmSEXxvbHNsIg';
+            $url_request=$this->getYacareUrl()."payment-orders-managment/payment-order";
+            $token_request=$this->getYacareToken();
             $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
             $datos_post=[
                 "buyer" => [
@@ -708,8 +695,8 @@ class ApiturnoController extends Controller
                     "unitPrice" => $precio_float
                     ]
                 ],
-                "notificationURL" => "https://rtogodoycruz.reviturnos.com.ar/api/auth/notif",
-                "redirectURL" => "https://turnosrtogc.reviturnos.com.ar/confirmed",
+                "notificationURL" => $this->getYacareNotifUrl(),
+                "redirectURL" => $this->getYacareRedirectUrl(),
                 "reference" => $referencia
             ];
             $headers_yacare=[
@@ -718,14 +705,7 @@ class ApiturnoController extends Controller
             try{
                 $res_yacare = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
             }catch(\Exception $e){
-                $error=[
-                    "tipo" => "YACARE",
-                    "descripcion" => "Fallo la solicitud de pago",
-                    "fix" => "NA",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $nro_turno_rto
-                ];
-                Logerror::insert($error);
+                $this->log("YACARE", "Fallo la solicitud de pago", "NA", $turno->id, $nro_turno_rto, "solicitarTurno");
             }
             if( $res_yacare->getStatusCode()!=200){
                 $respuestaError=[
@@ -736,20 +716,18 @@ class ApiturnoController extends Controller
             $id_cobro='Y-'.$res_yacare["paymentOrderUUID"];
             $url_pago=$res_yacare["paymentURL"];
         }else{
-            $fecha_vencimiento_aux_mp=$fecha_actual->modify('-1 hours');
+            $fecha_vencimiento_aux_mp=$fecha_vencimiento;
             $dia_vencimiento_mp=$fecha_vencimiento_aux_mp->format('Y-m-d');
             $hora_vencimiento_mp=$fecha_vencimiento_aux_mp->format('H:i:s');
             $fecha_vencimiento_mp=$dia_vencimiento_mp.'T'.$hora_vencimiento_mp.'.000-00:00';
-            // $url_request="https://api.mercadopago.com/checkout/preferences";
-            // $token_request="Bearer APP_USR-5150441327591477-070520-9c02fe96f0c292d0fa40340ab964b8bc-15129767";
-            $url_request="https://api.mercadopago.com/checkout/preferences";
-            $token_request="Bearer TEST-1963147828445709-052222-3ab1f18bc72827756c825693867919c9-32577613";
+            $url_request=$this->getMPUrl()."checkout/preferences";
+            $token_request="Bearer ".$this->getMPToken();
             $headers_mercadopago=[
                 'Authorization' => $token_request
             ];
             $datos_post=[
                 "external_reference" => $referencia,
-                "notification_url" => "https://rtogodoycruz.reviturnos.com.ar/api/auth/notifMeli",
+                "notification_url" => $this->getMPNotifUrl(),
                 "payer" => [
                     "name" => $datos_turno["nombre"],
                     "surname" => $datos_turno["apellido"],
@@ -770,24 +748,31 @@ class ApiturnoController extends Controller
                     "excluded_payment_methods" => [
                         [
                             "id" => "bapropagos"
+                        ],
+                        [
+                            "id" => "rapipago"
+                        ],
+                        [
+                            "id" => "pagofacil"
+                        ],
+                        [
+                            "id" => "cargavirtual"
+                        ],
+                        [
+                            "id" => "redlink"
+                        ],
+                        [
+                            "id" => "cobroexpress"
                         ]
                     ]
                 ],
                 "expires" => true,
-                "expiration_date_to" => $fecha_vencimiento_mp,
-                "date_of_expiration"=> $fecha_vencimiento_mp
+                "expiration_date_to"=> $fecha_vencimiento_mp
             ];
             try{
                 $res_mp = Http::withHeaders($headers_mercadopago)->post($url_request,$datos_post);
             }catch(\Exception $e){
-                $error=[
-                    "tipo" => "MERCADO PAGO",
-                    "descripcion" => "Fallo la solicitud de pago",
-                    "fix" => "NA",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $nro_turno_rto
-                ];
-                Logerror::insert($error);
+                $this->log("MERCADO PAGO", "Fallo la solicitud de pago", "na", $turno->id, $nro_turno_rto, "solicitarTurno");
             }
             if( $res_mp->getStatusCode()!=201){
                 $respuestaError=[
@@ -816,9 +801,12 @@ class ApiturnoController extends Controller
             'dominio' => $datos_turno["patente"],
             'email' => $email_solicitud,
             'tipo_vehiculo' => $datos_turno["tipo_de_vehiculo"],
-            'marca' => $datos_turno["marca"],
-            'modelo' => $datos_turno["modelo"],
-            'anio' => $datos_turno["anio"],
+            // 'marca' => $datos_turno["marca"],
+            // 'modelo' => $datos_turno["modelo"],
+            // 'anio' => $datos_turno["anio"],
+            'marca' => "SIN ESPECIFICAR",
+            'modelo' => "SIN ESPECIFICAR",
+            'anio' => 2000,
             'combustible' => $datos_turno["combustible"],
             'inscr_mendoza' => $datos_turno["inscripto_en_mendoza"],
             'id_turno' => $turno->id,
@@ -827,29 +815,13 @@ class ApiturnoController extends Controller
         if($turno->estado=="D"){
             $res_guardar_datos=Datosturno::insert($aux_carga_datos_turno);
             if(!$res_guardar_datos){
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo el alta de los datos del turno.",
-                    "fix" => "REVISAR",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $nro_turno_rto,
-                    "servicio" => "solicitarTurno"
-                ];
-                Logerror::insert($error);
+                $this->log("CRITICO", "Fallo el alta de los datos del turno", "REVISAR", $turno->id, $nro_turno_rto, "solicitarTurno");
             }
         }else{
             // voy a tener que hacer update del registro
             $res_actualizar_datos=Datosturno::where('id_turno',$turno->id)->update($aux_carga_datos_turno);
             if(!$res_actualizar_datos){
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo el update de los datos del turno.",
-                    "fix" => "REVISAR",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $nro_turno_rto,
-                    "servicio" => "solicitarTurno"
-                ];
-                Logerror::insert($error);
+                $this->log("CRITICO", "Fallo el update de los datos del turno", "REVISAR", $turno->id, $nro_turno_rto, "solicitarTurno");
             }
         }
         // alta en tabla datos_turno
@@ -863,30 +835,14 @@ class ApiturnoController extends Controller
         try{
             Mail::to($email_solicitud)->send(new TurnoRtoM($datos_mail));
         }catch(\Exception $e){
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al enviar datos del turno al cliente",
-                "fix" => "MAIL",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto,
-                "servicio" => "solicitarTurno"
-            ];
-            Logerror::insert($error);
+            $this->log("CRITICO", "Fallo al enviar datos del turno al cliente", "MAIL", $turno->id, $nro_turno_rto, "solicitarTurno");
         }
         $nuevoToken=$this->obtenerToken();
         if($nuevoToken["status"]=='failed'){
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al obtener token previo a confirmar el turno",
-                "fix" => "CONFIRM",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-            Logerror::insert($error);
+            $this->log("CRITICO", "Fallo al obtener token previo a confirmar el turno", "CONFIRM", $turno->id, "", "notification");
         }
         // try{
-        //     $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post('https://rto.mendoza.gov.ar/api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
+        //     $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
         //     if( $response_rto->getStatusCode()!=200){
         //         $error=[
         //             "tipo" => "CRITICO",
