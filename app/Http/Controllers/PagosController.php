@@ -22,6 +22,12 @@ use Config;
 class PagosController extends Controller
 {
 
+    public $mp_payments_url='v1/payments/';
+
+    public $yacare_transactions_url='operations-managment/operations?transaction=';
+
+    public $rto_login_url='api/v1/auth/login';
+
     public function getRtoUrl(){
         return config('rto.url');
     }
@@ -90,8 +96,9 @@ class PagosController extends Controller
                  'email' => 'rtogodoycruz@gmail.com',
                  'password' => 'Rto93228370330'
             ];
-            try{  
-                $response = Http::withOptions(['verify' => false])->post($this->getRtoUrl().'api/v1/auth/login',$data);
+            try{
+                $request_url=$this->getRtoUrl().$this->rto_login_url;
+                $response = Http::withOptions(['verify' => false])->post($request_url,$data);
                 if( $response->getStatusCode()!=200){
                     $respuesta=[
                         'status' => 'failed',
@@ -164,13 +171,12 @@ class PagosController extends Controller
         /////////////////////////////////////////////////////////////////////
         // CONSULTO A YACARE LOS DATOS DEL PAGO
         /////////////////////////////////////////////////////////////////////
-        $url_request=$this->getYacareUrl().'operations-managment/operations?transaction='.$id_cobro;
-        $token_request=$this->getYacareToken();
+        $request_url=$this->getYacareUrl().$this->yacare_transactions_url.$id_cobro;
         $headers_yacare=[
-            'Authorization' => $token_request
+            'Authorization' => $this->getYacareToken()
         ];
         try{
-            $response = Http::withHeaders($headers_yacare)->get($url_request);
+            $response = Http::withHeaders($headers_yacare)->get($request_url);
         }catch(\Exception $e){
             $this->log("YACARE", "Fallo la consulta de estado del id: ".$id_cobro, "NA", 0, "", "notification");
             $respuesta=[
@@ -259,11 +265,9 @@ class PagosController extends Controller
         ///////////////////////
         $id_cobro=$request->input("data.id");
         // VOY A BUSCAR LOS DATOS DEL PAGO
-        $url_preffix=$this->getMPUrl().'v1/payments/';
-        $url_access_code=$this->getMPToken();
-        $url_request=$url_preffix.$id_cobro.'?access_token='.$url_access_code;
+        $request_url=$this->getMPUrl().$this->mp_payments_url.$id_cobro.'?access_token='.$this->getMPToken();
         try{
-            $response = Http::get($url_request);
+            $response = Http::get($request_url);
         }catch(\Exception $e){
             $this->log("YACARE", "Fallo la consulta de estado del id: ".$id_cobro, "NA", 0, "", "notification");
             $respuesta=[
