@@ -28,6 +28,10 @@ class ApiturnoController extends Controller
         return config('rto.url');
     }
 
+    public function getRTOConfirmQuotes(){
+        return config('rto.confirm_quotes');
+    }
+
     public function getYacareUrl(){
         return config('yacare.url');
     }
@@ -741,9 +745,6 @@ class ApiturnoController extends Controller
                         "currency_id" => "ARS"
                     ]
                 ],
-                // "back_urls" => [
-                //     "success" => "https://turnos.reviturnos.com.ar/confirmed/rivadavia"
-                // ],
                 "payment_methods" => [
                     "excluded_payment_methods" => [
                         [
@@ -841,30 +842,16 @@ class ApiturnoController extends Controller
         if($nuevoToken["status"]=='failed'){
             $this->log("CRITICO", "Fallo al obtener token previo a confirmar el turno", "CONFIRM", $turno->id, "", "notification");
         }
-        // try{
-        //     $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
-        //     if( $response_rto->getStatusCode()!=200){
-        //         $error=[
-        //             "tipo" => "CRITICO",
-        //             "descripcion" => "Fallo al confirmar turno al RTO",
-        //             "fix" => "CONFIRM",
-        //             "id_turno" => $turno->id,
-        //             "nro_turno_rto" => $nro_turno_rto,
-        //             "servicio" => "notification"
-        //         ];
-        //         Logerror::insert($error);   
-        //     }
-        // }catch(\Exception $e){
-        //     $error=[
-        //         "tipo" => "CRITICO",
-        //         "descripcion" => "Fallo al confirmar turno al RTO",
-        //         "fix" => "CONFIRM",
-        //         "id_turno" => $turno->id,
-        //         "nro_turno_rto" => $nro_turno_rto,
-        //         "servicio" => "notification"
-        //     ];
-        //     Logerror::insert($error);
-        // }
+        if($this->getRtoConfirmQuotes()){
+            try{
+                $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($this->getRtoUrl().'api/v1/auth/confirmar',array('turno' => $nro_turno_rto));
+                if( $response_rto->getStatusCode()!=200){
+                    $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "notification");
+                }
+            }catch(\Exception $e){
+                $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "notification");
+            }
+        }
         $respuesta=[
                 'url_pago' => $url_pago
             ];
