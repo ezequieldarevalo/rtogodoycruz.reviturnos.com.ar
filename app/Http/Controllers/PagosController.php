@@ -17,9 +17,62 @@ use SteamCondenser\Exceptions\SocketException;
 use Illuminate\Support\Facades\Mail;
 use App\Models\PagoRto;
 use App\Mail\PagoRtoM;
+use Config;
 
 class PagosController extends Controller
 {
+
+    public function getRtoUrl(){
+        return config('rto.url');
+    }
+
+    public function getRTOConfirmQuotes(){
+        return config('rto.confirm_quotes');
+    }
+
+    public function getYacareUrl(){
+        return config('yacare.url');
+    }
+
+    public function getYacareToken(){
+        return config('yacare.token');
+    }
+
+    public function getYacareNotifUrl(){
+        return config('yacare.notif_url');
+    }
+
+    public function getYacareRedirectUrl(){
+        return config('yacare.redirect_url');
+    }
+
+    public function getMPUrl(){
+        return config('mercadopago.url');
+    }
+
+    public function getMPToken(){
+        return config('mercadopago.token');
+    }
+
+    public function getMPNotifUrl(){
+        return config('mercadopago.notif_url');
+    }
+
+    public function getMPRedirectUrl(){
+        return config('mercadopago.redirect_url');
+    }
+
+    public function log($type, $description, $fix, $quote_id, $rto_quote_id, $service ){
+        $error=[
+            "tipo" => $type,
+            "descripcion" => $description,
+            "fix" => $fix,
+            "id_turno" => $quote_id,
+            "nro_turno_rto" => $rto_quote_id,
+            "servicio" => $service
+        ];
+        Logerror::insert($error);
+    }
 
     // funcion que busca el token en la tabla, luego si esta vencido obtiene otro y lo guarda
     public function obtenerToken(){
@@ -38,7 +91,7 @@ class PagosController extends Controller
                  'password' => 'Rto93228370330'
             ];
             try{  
-                $response = Http::withOptions(['verify' => false])->post('https://rto.mendoza.gov.ar/api/v1/auth/login',$data);
+                $response = Http::withOptions(['verify' => false])->post($this->getRtoUrl().'api/v1/auth/login',$data);
                 if( $response->getStatusCode()!=200){
                     $respuesta=[
                         'status' => 'failed',
@@ -89,99 +142,48 @@ class PagosController extends Controller
             ];     
             return response()->json($respuesta,400);
         }
-        $error=[
-                "tipo" => "NOTIF YAC",
-                "descripcion" => "Llego notificacion con id: ".$request->input("id"),
-                "fix" => "GETSTATE",
-                "id_turno" => 0,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-        Logerror::insert($error);
+        $this->log("NOTIF YAC", "Llego notificacion con id: ".$request->input("id"), "GETSTATE", 0, "", "notification");
         // ALMACENO EL INPUT EN LA VARIABLE ID_COBRO
         ///////////////////////
-        $id_cobro=$request->input("id");
+        $yacare_prefix='Y-';
+        $id_cobro=$request->input("id");;
+        $id_cobro_yac=$yacare_prefix.$request->input("id");
         // BUSCO EL TURNO CON EL ID DE COBRO
         ///////////////////////
-        $turno=Turno::where('id_cobro_yac',$id_cobro)->first();
+        $turno=Turno::where('id_cobro_yac',$id_cobro_yac)->first();
         // SI LA BUSQUEDA NO DA RESULTADO, REGISTRO EL ERROR
         ///////////////////////
         if(!$turno){
-            $error=[
-                "tipo" => "TABLA",
-                "descripcion" => "Fallo la consulta en la tabla turnos con el id de cobro: ".$id_cobro,
-                "fix" => "NA",
-                "id_turno" => 0,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-            Logerror::insert($error);
+            $this->log("TABLA", "Fallo la consulta en la tabla turnos con el id de cobro: ".$id_cobro, "NA", 0, "", "notification");
             $respuesta=[
                 'status' => 'OK'
             ];      
             return response()->json($respuesta,200);
         }
-        $error=[
-                "tipo" => "NOTIF YAC",
-                "descripcion" => "Obtuve id de turno desde el id de pago :".$request->input("id"),
-                "fix" => "GETSTATE",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-        Logerror::insert($error);
+        $this->log("NOTIF YAC", "Obtuve id de turno desde el id de pago :".$request->input("id"), "GETSTATE", $turno->id, "", "notification");
         /////////////////////////////////////////////////////////////////////
         // CONSULTO A YACARE LOS DATOS DEL PAGO
         /////////////////////////////////////////////////////////////////////
-        // url produccion
-        // $url_request='https://api.yacare.com/v1/operations-managment/operations?transaction='.$id_cobro;
-        // url desarrollo
-        $url_request='https://core.demo.yacare.com/api-homologacion/v1/operations-managment/operations?transaction='.$id_cobro;
-        // token yacare produccion
-        // $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMDc4OSIsImlhdCI6MTYzNzkzMzMwOCwiZXhwIjoxNjY5NDkwMjYwLCJPSUQiOjEwNzg5LCJUSUQiOiJZQUNBUkVfQVBJIn0.66FWRwSDonmK-5GiIDOPMSDSnLL0ZB4PI5m8J8mrmFJQsbqgQwLUB7voz2AqxdBOHEYTjuraitmSEXxvbHNsIg';
-        // token yacare desarrollo
-        $token_request='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDQ4IiwiaWF0IjoxNjEzMzQ3NjY1LCJleHAiOjE2NDQ5MDQ2MTcsIk9JRCI6MTQ0OCwiVElEIjoiWUFDQVJFX0FQSSJ9.ElFX4Bo1H-qyuuVZA0RW6JpDH7HjltV8cJP_qzDpNerD-24BdZB8QlD65bGdy2Vc0uT0FzYmsev9vlVz9hQykg';
+        $url_request=$this->getYacareUrl().'operations-managment/operations?transaction='.$id_cobro;
+        $token_request=$this->getYacareToken();
         $headers_yacare=[
             'Authorization' => $token_request
         ];
         try{
             $response = Http::withHeaders($headers_yacare)->get($url_request);
         }catch(\Exception $e){
-            $error=[
-                "tipo" => "YACARE",
-                "descripcion" => "Fallo la consulta de estado del id: ".$id_cobro,
-                "fix" => "NA",
-                "id_turno" => 0,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-            Logerror::insert($error);
+            $this->log("YACARE", "Fallo la consulta de estado del id: ".$id_cobro, "NA", 0, "", "notification");
             $respuesta=[
                 'status' => 'OK'
             ];      
             return response()->json($respuesta,200);
         }
-        $error=[
-                "tipo" => "NOTIF YAC",
-                "descripcion" => "Consulte estado de un pago, el resultado fue: ".$response->status(),
-                "fix" => "GETSTATE",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-        Logerror::insert($error);
+        $this->log("NOTIF YAC", "Consulte estado de un pago, el resultado fue: ".$response->status(), "GETSTATE", $turno->id, "", "notification");
         // SI YACARE DA ERROR ENTONCES LO REGISTRO
         /////////////////////////////////////////////////////////////////////
+        
         if( $response->status()!=200){
-            $error=[
-                "tipo" => "YACARE",
-                "descripcion" => "Fallo la consulta de estado del id: ".$id_cobro.". Posible pago no registrado.",
-                "fix" => "REVISAR",
-                "id_turno" => 0,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-            Logerror::insert($error);
+            $this->log("YACARE", "Fallo la consulta de estado del id: ".$id_cobro.". Posible pago no registrado.", "REVISAR", 0, "", "notification");
             $respuesta=[
                 'status' => 'OK'
             ];       
@@ -189,47 +191,25 @@ class PagosController extends Controller
         }
         // ALMACENO DATOS DEL PAGO EN LA VARIABLE CORRESPONDIENTE
         /////////////////////////////////////////////////////////////////////
+        
         $datos_pago=$response[0];
-        $error=[
-            "tipo" => "AAAAAAA",
-            "descripcion" => "Pruebo obtener status: ".$datos_pago["status"]["id"],
-            "fix" => "REVISAR",
-            "id_turno" => $turno->id,
-            "nro_turno_rto" => "",
-            "servicio" => "notification"
-        ];
-        Logerror::insert($error);
+        
+        $this->log("AAAAAAA", "Pruebo obtener status: ".$datos_pago["status"]["id"], "REVISAR", $turno->id, "", "notification");
         // SI ESTA PAGA CAMBIO ESTADO DEL TURNO A PAGADO Y REGISTRO EL COBRO EN LA TABLA
         /////////////////////////////////////////////////////////////////////
+        
         if($datos_pago["status"]["id"]=="P"){
             $listado_intentos=$datos_pago["payments"];
             // OBTENGO ID DEL TURNO EN LA RTO PARA CONFIRMAR A RTO MENDOZA
             /////////////////////////////////////////////////////////////////////
             $datos_turno=Datosturno::where('id_turno',$turno->id)->first();
             if(!$datos_turno){
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "No se encuentran datos del turno para confirmar a la RTO.",
-                    "fix" => "CONFIRM",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => "",
-                    "servicio" => "notification"
-                ];
-                Logerror::insert($error);
-
+                $this->log("CRITICO", "No se encuentran datos del turno para confirmar a la RTO.", "CONFIRM", $turno->id, "", "notification");
             }
             // ACTUALIZO ESTADO DEL TURNO
             $res_pagar=Turno::where('id',$turno->id)->update(array('estado' => "P"));
             if(!$res_pagar){
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo al actualizar el estado del turno a pagado",
-                    "fix" => "REVISAR",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $datos_turno->nro_turno_rto,
-                    "servicio" => "notification"
-                ];
-                Logerror::insert($error);
+                $this->log("CRITICO", "Fallo al actualizar el estado del turno a pagado", "REVISAR", $turno->id, $datos_turno->nro_turno_rto, "notification");
             }
             foreach($listado_intentos as $pago){
                 // si el pago esta aprobado
@@ -245,18 +225,22 @@ class PagosController extends Controller
                         'id_cobro' => $id_cobro
                     ));
                     if(!$res_cobro){
-                        $error=[
-                                "tipo" => "CRITICO",
-                                "descripcion" => "El cobro no pudo registrarse",
-                                "fix" => "REVISAR",
-                                "id_turno" => $turno->id,
-                                "nro_turno_rto" => $datos_turno->nro_turno_rto,
-                                "servicio" => "notification"
-                            ];
-                        Logerror::insert($error);
+                        $this->log("CRITICO", "El cobro no pudo registrarse", "REVISAR", $turno->id, $datos_turno->nro_turno_rto, "notification");
                     }
                     break;
                 }
+            }
+            $datos_mail=new PagoRto;
+            $datos_mail->id=$turno->id;
+            $datos_mail->fecha=$turno->fecha;
+            $datos_mail->hora=$turno->hora;
+            $datos_mail->url_pago="";
+            $datos_mail->dominio=$datos_turno->dominio;
+            $datos_mail->nombre=$datos_turno->nombre;
+            try{
+                Mail::to($datos_turno->email)->send(new PagoRtoM($datos_mail));
+            }catch(\Exception $e){
+                $this->log("CRITICO", "Fallo al enviar confirmacion por pago del turno al cliente", "MAIL", 0, "", "notification");
             }
             $respuesta=[
                 'status' => 'OK'
@@ -275,21 +259,13 @@ class PagosController extends Controller
         ///////////////////////
         $id_cobro=$request->input("data.id");
         // VOY A BUSCAR LOS DATOS DEL PAGO
-        $url_preffix='https://api.mercadopago.com/v1/payments/';
-        $url_access_code='TEST-1963147828445709-052222-3ab1f18bc72827756c825693867919c9-32577613';
+        $url_preffix=$this->getMPUrl().'v1/payments/';
+        $url_access_code=$this->getMPToken();
         $url_request=$url_preffix.$id_cobro.'?access_token='.$url_access_code;
         try{
             $response = Http::get($url_request);
         }catch(\Exception $e){
-            $error=[
-                "tipo" => "YACARE",
-                "descripcion" => "Fallo la consulta de estado del id: ".$id_cobro,
-                "fix" => "NA",
-                "id_turno" => 0,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-            Logerror::insert($error);
+            $this->log("YACARE", "Fallo la consulta de estado del id: ".$id_cobro, "NA", 0, "", "notification");
             $respuesta=[
                 'status' => 'OK'
             ];    
@@ -301,15 +277,7 @@ class PagosController extends Controller
         // SI LA BUSQUEDA NO DA RESULTADO, REGISTRO EL ERROR
         ///////////////////////
         if(!$turno){
-            $error=[
-                "tipo" => "TABLA",
-                "descripcion" => "Fallo la consulta en la tabla turnos con el id de cobro: ".$id_cobro,
-                "fix" => "NA",
-                "id_turno" => 0,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-            Logerror::insert($error);
+            $this->log("TABLA", "Fallo la consulta en la tabla turnos con el id de cobro: ".$id_cobro, "NA", 0, "", "notification");
             $respuesta=[
                 'status' => 'OK'
             ];    
@@ -321,28 +289,12 @@ class PagosController extends Controller
             /////////////////////////////////////////////////////////////////////
             $datos_turno=Datosturno::where('id_turno',$turno->id)->first();
             if(!$datos_turno){
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "No se encuentran datos del turno para confirmar a la RTO.",
-                    "fix" => "CONFIRM",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => "",
-                    "servicio" => "notification"
-                ];
-                Logerror::insert($error);
+                $this->log("CRITICO", "No se encuentran datos del turno para confirmar a la RTO.", "CONFIRM", $turno->id, "", "notification");
             }
             // ACTUALIZO ESTADO DEL TURNO
             $res_pagar=Turno::where('id',$turno->id)->update(array('estado' => "P"));
             if(!$res_pagar){
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo al actualizar el estado del turno a pagado",
-                    "fix" => "REVISAR",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $datos_turno->nro_turno_rto,
-                    "servicio" => "notification"
-                ];
-                Logerror::insert($error);
+                $this->log("CRITICO", "Fallo al actualizar el estado del turno a pagado", "REVISAR", $turno->id, $datos_turno->nro_turno_rto, "notification");
             }
             $res_cobro=Cobro::insert(array(
                 'fecha' => substr($response["date_approved"],0,19),
@@ -353,16 +305,8 @@ class PagosController extends Controller
                 'id_turno' => $turno->id,
                 'id_cobro' => $id_cobro
             ));
-            if(!$res_cobro){  
-                $error=[
-                        "tipo" => "CRITICO",
-                        "descripcion" => "El cobro no pudo registrarse",
-                        "fix" => "REVISAR",
-                        "id_turno" => $turno->id,
-                        "nro_turno_rto" => $datos_turno->nro_turno_rto,
-                        "servicio" => "notification"
-                ];
-                Logerror::insert($error);
+            if(!$res_cobro){
+                $this->log("CRITICO", "El cobro no pudo registrarse", "REVISAR", $turno->id, $datos_turno->nro_turno_rto, "notification");
             }
             try{
                 $datos_mail=new PagoRto;
@@ -374,15 +318,7 @@ class PagosController extends Controller
                 $datos_mail->nombre=$datos_turno->nombre;
                 Mail::to($datos_turno->email)->send(new PagoRtoM($datos_mail));
             }catch(\Exception $e){
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo al enviar confirmacion por pago del turno al cliente",
-                    "fix" => "MAIL",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $datos_turno->nro_turno_rto,
-                    "servicio" => "notifMeli"
-                ];
-                Logerror::insert($error);
+                $this->log("CRITICO", "Fallo al enviar confirmacion por pago del turno al cliente", "MAIL", $turno->id, $datos_turno->nro_turno_rto, "notification");
             }
             $respuesta=[
                 'status' => 'OK'
