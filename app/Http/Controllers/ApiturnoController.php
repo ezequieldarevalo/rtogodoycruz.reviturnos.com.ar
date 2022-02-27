@@ -686,10 +686,12 @@ class ApiturnoController extends Controller
             foreach($duplicated_domain_list as $duplicated_domain){
                 $duplicated_domain_quote=Turno::where('id',$duplicated_domain["id_turno"])->first();
                 if($duplicated_domain_quote){
-                    if($duplicated_domain_quote->estado=="R" && $duplicated_domain_quote->vencimiento>$currentDate){
+                    // $duplicate_expiration_date=strtotime($duplicated_domain_quote->vencimiento);
+                    $duplicate_expiration_date = DateTime::createFromFormat('Y-m-d H:i:s', $duplicated_domain_quote->vencimiento);
+                    if($duplicated_domain_quote->estado=="R" && $duplicate_expiration_date>$currentDate){
                         $this->log("DALEEE", "Estado: ".$duplicated_domain_quote->estado.", vencimiento: ".$duplicated_domain_quote->vencimiento.", currentDate: ".$currentDate->format('dmYHis'), "NA", 0, "", "solicitarTurnopepe");
                         $error_response=[
-                            'reason' => 'EXISTS_QUOTE_DOMAIN'
+                            'reason' => 'DOMAIN_WITH_PENDING_QUOTE'
                         ];
                         return response()->json($error_response,404);
                     }
@@ -758,7 +760,7 @@ class ApiturnoController extends Controller
             $mp_aux_expiration_date=$expiration_date;
             $mp_expiration_day=$mp_aux_expiration_date->format('Y-m-d');
             $mp_expiration_time=$mp_aux_expiration_date->format('H:i:s');
-            $mp_expiration_date=$mp_expiration_day.'T'.$mp_expiration_time.'.000-00:00';
+            $mp_expiration_date=$mp_expiration_day.'T'.$mp_expiration_time.'.000-03:00';
             $request_url=$this->getMPUrl().$this->mp_preferences_url;
             $headers_mercadopago=[
                 'Authorization' => "Bearer ".$this->getMPToken()
