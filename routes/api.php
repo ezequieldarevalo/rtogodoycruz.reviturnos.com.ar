@@ -32,7 +32,7 @@ Route::group([
     // Route::post('signup', [AuthController::class, 'signUp']);
     Route::post('solTur', [ApiturnoController::class, 'solicitarTurno']);
     Route::post('confQuote', [ApiturnoController::class, 'confirmQuote']);
-    Route::post('valTur', [ApiturnoController::class, 'validarTurno']);
+    Route::post('valTur', [ApiturnoController::class, 'validateQuote']);
     Route::post('getQuotes', [ApiturnoController::class, 'getAvailableQuotes']);
     Route::post('notif', [PagosController::class, 'notification']);
     Route::post('notifMeli', [PagosController::class, 'notificationMeli']);
