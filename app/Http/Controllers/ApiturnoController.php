@@ -537,7 +537,7 @@ class ApiturnoController extends Controller
         $data_reserva=[
             'estado' => "R",
             'vencimiento' => $fecha_vencimiento,
-            'id_cobro_yac' => $id_cobro
+            'id_cobro_yac' => 'Y-'.$id_cobro
         ];
         $res_reservar=Turno::where('id',$turno->id)->update($data_reserva);
         if(!$res_reservar){
