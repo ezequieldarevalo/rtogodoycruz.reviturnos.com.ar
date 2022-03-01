@@ -348,7 +348,7 @@ class ApiturnoController extends Controller
             ['fecha','>',$currentDay],
             ['vencimiento','<',$date_vs_expiration]            
         ];
-        $quotes=Turno::whereIn('id_linea',$quote_lines)
+        $quotes=Turno::select('id', 'fecha', 'hora')->whereIn('id_linea',$quote_lines)
             ->where($available_conditions)
             ->orWhere($expired_conditions)
             ->whereIn('id_linea',$quote_lines)
