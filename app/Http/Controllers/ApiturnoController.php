@@ -42,11 +42,11 @@ class ApiturnoController extends Controller
         return config('rto.confirm_quotes');
     }
 
-    public function getRTOUser(){
+    public function getRtoUser(){
         return config('rto.user');
     }
 
-    public function getRTOPassword(){
+    public function getRtoPassword(){
         return config('rto.password');
     }
 
@@ -120,7 +120,7 @@ class ApiturnoController extends Controller
             try{
                 $url_request=$this->getRtoUrl().$this->rto_login_url;
                 $res_rto_login = Http::withOptions(['verify' => false])->post($url_request, $rto_plant_credentials);
-                if($response->getStatusCode()!=200){
+                if($res_rto_login->getStatusCode()!=200){
                     $error_response=[
                         'status' => 'failed',
                         'token' => ''
