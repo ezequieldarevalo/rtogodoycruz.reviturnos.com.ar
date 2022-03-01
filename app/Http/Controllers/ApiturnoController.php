@@ -376,234 +376,234 @@ class ApiturnoController extends Controller
         return response()->json($success_response,200);
     }
 
-    // public function solicitarTurno(Request $request) {
-    //     if($request->header('Content-Type')!="application/json"){
-    //         $respuesta=[
-    //             'status' => 'failed',
-    //             'mensaje' => "Debe enviar datos en formato json"
-    //         ];
+    public function solicitarTurno(Request $request) {
+        if($request->header('Content-Type')!="application/json"){
+            $respuesta=[
+                'status' => 'failed',
+                'mensaje' => "Debe enviar datos en formato json"
+            ];
                     
-    //         return $respuesta;
-    //     }
-    //     $validator = Validator::make($request->all(), [
-    //         'origen' => 'required|string|max:1',
-    //         'email' => 'required|email:rfc,dns',
-    //         'id_turno' => 'required|integer',
-    //         'tipo_vehiculo' => 'required|string|max:50',
-    //         'nro_turno_rto' => 'required|integer'
-    //     ]);
-    //     if ($validator->fails()) {
-    //         $respuesta=[
-    //             'status' => 'failed',
-    //             'mensaje' => "Datos inválidos"
-    //         ];       
-    //         return response()->json($respuesta,400);
-    //     }
-    //     $nro_turno_rto=$request->input("nro_turno_rto");
-    //     $email_solicitud=$request->input("email");
-    //     $id_turno=$request->input("id_turno");
-    //     $origen=$request->input("origen");
-    //     $tipo_vehiculo=$request->input("tipo_vehiculo");
-    //     $nuevoToken=$this->getRtoToken();
-    //     if($nuevoToken["status"]=='failed'){
-    //         $respuestaError=[
-    //             'status' => 'failed',
-    //             'mensaje' => $nuevoToken["mensaje"]
-    //         ];
-    //         return response()->json($respuestaError,400);
-    //     }
-    //     $data=[
-    //         'turno' => $nro_turno_rto
-    //     ];
-    //     try{
-    //         $request_url=$this->getRtoUrl().$this->rto_quote_url;
-    //         $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,$data);
-    //     }catch(\Exception $e){    
-    //         $respuestaError=[
-    //             'status' => 'failed',
-    //             'mensaje' => 'RTO no responde al consultar turno'
-    //         ];
-    //         return response()->json($respuestaError,400);
-    //     }
-    //     if( $response->getStatusCode()!=200){
-    //         $respuestaError=[
-    //             'status' => 'failed',
-    //             'mensaje' => 'Fallo la consulta al RTO',
-    //             'token' => $nuevoToken,
-    //             'turno' => $nro_turno_rto
-    //         ];
-    //         return response()->json($respuestaError,400);
-    //     }else{
-    //         if($response["status"]!='success'){     
-    //             $respuestaError=[
-    //                 'status' => 'failed',
-    //                 'mensaje' => 'Consulta con status no exitoso'
-    //             ];
-    //             return response()->json($respuestaError,400);
-    //         }
-    //     }
-    //     $datos_turno=$response["turno"];
-    //     if($datos_turno["email"]!=$email_solicitud){
-    //         $respuestaError=[
-    //             'status' => 'failed',
-    //             'mensaje' => 'Email invalido'
-    //         ];
-    //         return response()->json($respuestaError,400);
-    //     }
-    //     // valido que el turno este pendiente
-    //     if($datos_turno["estado"]!="PENDIENTE"){
-    //         $respuestaError=[
-    //             'status' => 'failed',
-    //             'mensaje' => 'Su turno no se encuentra activo.'
-    //         ];
-    //         return response()->json($respuestaError,400);
-    //     }
-    //     // valido que el dominio no tenga otro turno pendiente
-    //     $datosturnos=Datosturno::where('dominio',$datos_turno["patente"])->get();
-    //     foreach($datosturnos as $datosturno){
-    //         if($datosturno->turno->estado=="R"){
-    //             $respuesta=[
-    //                 'status' => 'failed',
-    //                 'mensaje' => "Existe un turno reservado pero no confirmado para su dominio."
-    //             ];      
-    //             return response()->json($respuesta,400);
-    //         } 
-    //     }
-    //     $turno=Turno::where('id',$id_turno)->first();
-    //     if(!$turno){
-    //         $respuestaError=[
-    //             'status' => 'failed',
-    //             'mensaje' => 'El turno no existe'
-    //         ];
-    //         return response()->json($respuestaError,400);
-    //     }
-    //     $fecha_actual=new DateTime();
-    //     if(!($turno->estado=="D" || ($turno->estado=="R" && $turno->vencimiento<$fecha_actual))){
-    //         $respuestaError=[
-    //                     'status' => 'failed',
-    //                     'mensaje' => "El turno ya no se encuentra disponible. Refresque la pagina."
-    //                 ];
-    //         return response()->json($respuestaError,400);
-    //     }
-    //     $fecha=getDate();
-    //     if(strlen($fecha["mon"])==1)
-    //         $mes='0'.$fecha["mon"];
-    //     else 
-    //         $mes=$fecha["mon"];
-    //     $dia_actual=$fecha["year"]."-".$mes."-".$fecha["mday"];
-    //     $vehiculo=Precio::where('descripcion',$tipo_vehiculo)->first();
-    //     $precio_float=$vehiculo->precio.'.00';
-    //     $fecha_vencimiento=$fecha_actual->modify('+12 hours');
-    //     $url_request=$this->getYacareUrl().$this->yacare_payments_url;
-    //     $token_request=$this->getYacareToken();
-    //     $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
-    //     $referencia=$id_turno.$fecha_actual->format('dmYHis');
-    //     $datos_post=[
-    //         "buyer" => [
-    //             "email" => $email_solicitud,
-    //             "name" => $nombre_completo,
-    //             "surname" => ""
-    //         ],
-    //         "expirationTime" => 600,
-    //         "items" => [
-    //             [
-    //             "name" => "Turno RTVO Centro Express",
-    //             "quantity" => "1",
-    //             "unitPrice" => $precio_float
-    //             ]
-    //         ],
-    //         "notificationURL" => $this->getYacareNotifUrl(),
-    //         "redirectURL" => $this->getYacareRedirectUrl(),
-    //         "reference" => $referencia
-    //     ];
-    //     $headers_yacare=[
-    //         'Authorization' => $token_request
-    //     ];
-    //     try{
-    //         $response = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
-    //     }catch(\Exception $e){
-    //         $this->log('YACARE', 'Falló la solicitud de pago', 'NA', $turno->id, $nro_turno_rto);
-    //     }
-    //     if( $response->getStatusCode()!=200){
-    //         $respuestaError=[
-    //             'status' => 'failed',
-    //             'mensaje' => 'Fallo la solicitud de pago'
-    //         ];
-    //         return response()->json($respuestaError,400);  
-    //     }
-    //     $id_cobro=$response["paymentOrderUUID"];
-    //     // $id_cobro="";
-    //     // ACTUALIZO EL ESTADO DEL TURNO A RESERVADO
-    //     $data_reserva=[
-    //         'estado' => "R",
-    //         'vencimiento' => $fecha_vencimiento,
-    //         'id_cobro_yac' => $id_cobro
-    //     ];
-    //     $res_reservar=Turno::where('id',$turno->id)->update($data_reserva);
-    //     if(!$res_reservar){
-    //         $respuestaError=[
-    //             'status' => 'failed',
-    //             'mensaje' => 'Fallo al realizar la reserva'
-    //         ];
-    //         return response()->json($respuestaError,400);
-    //     }
-    //     $aux_carga_datos_turno=[
-    //         'nombre' => $nombre_completo,
-    //         'dominio' => $datos_turno["patente"],
-    //         'email' => $email_solicitud,
-    //         'tipo_vehiculo' => $datos_turno["tipo_de_vehiculo"],
-    //         'marca' => $datos_turno["marca"],
-    //         'modelo' => $datos_turno["modelo"],
-    //         'anio' => $datos_turno["anio"],
-    //         'combustible' => $datos_turno["combustible"],
-    //         'inscr_mendoza' => $datos_turno["inscripto_en_mendoza"],
-    //         'id_turno' => $turno->id,
-    //         'nro_turno_rto' => $nro_turno_rto
-    //     ];
-    //     if($turno->estado=="D"){
-    //         $res_guardar_datos=Datosturno::insert($aux_carga_datos_turno);
-    //         if(!$res_guardar_datos){
-    //             $this->log("CRITICO", "Fallo el alta de los datos del turno", "REVISAR", $turno->id, $nro_turno_rto, "solicitarTurno");
-    //         }
-    //     }else{
-    //         // voy a tener que hacer update del registro
-    //         $res_actualizar_datos=Datosturno::where('id_turno',$turno->id)->update($aux_carga_datos_turno);
-    //         if(!$res_actualizar_datos){
-    //             $this->log("CRITICO", "Fallo el update de los datos del turno", "REVISAR", $turno->id, $nro_turno_rto, "solicitarTurno");
-    //         }
-    //     }
-    //     // alta en tabla datos_turno
-    //     $datos_mail=new TurnoRto;
-    //     $datos_mail->id=$turno->id;
-    //     $datos_mail->fecha=$turno->fecha;
-    //     $datos_mail->hora=$turno->hora;
-    //     $datos_mail->url_pago=$response["paymentURL"];
-    //     $datos_mail->dominio=$datos_turno["patente"];
-    //     $datos_mail->nombre=$nombre_completo;
-    //     try{
-    //         Mail::to($email_solicitud)->send(new TurnoRtoM($datos_mail));
-    //     }catch(\Exception $e){
-    //         $this->log("CRITICO", "Fallo al enviar datos del turno al cliente", "MAIL", $turno->id, $nro_turno_rto, "solicitarTurno");
-    //     }
-    //     $nuevoToken=$this->getRtoToken();
-    //     if($nuevoToken["status"]=='failed'){
-    //         $this->log("CRITICO", "Fallo al obtener token previo a confirmar el turno", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
-    //     }
-    //     try{
-    //         $request_url=$this->getRtoUrl().$this->rto_quote_confirm_url;
-    //         $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,array('turno' => $nro_turno_rto));
-    //         if( $response_rto->getStatusCode()!=200){
-    //             $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
-    //         }
-    //     }catch(\Exception $e){
-    //         $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
-    //     }
-    //     $respuesta=[
-    //             'status' => 'OK',
-    //             'url_pago' => $response["paymentURL"]
-    //         ];
-    //     return response()->json($respuesta,200);
-    // }
+            return $respuesta;
+        }
+        $validator = Validator::make($request->all(), [
+            'origen' => 'required|string|max:1',
+            'email' => 'required|email:rfc,dns',
+            'id_turno' => 'required|integer',
+            'tipo_vehiculo' => 'required|string|max:50',
+            'nro_turno_rto' => 'required|integer'
+        ]);
+        if ($validator->fails()) {
+            $respuesta=[
+                'status' => 'failed',
+                'mensaje' => "Datos inválidos"
+            ];       
+            return response()->json($respuesta,400);
+        }
+        $nro_turno_rto=$request->input("nro_turno_rto");
+        $email_solicitud=$request->input("email");
+        $id_turno=$request->input("id_turno");
+        $origen=$request->input("origen");
+        $tipo_vehiculo=$request->input("tipo_vehiculo");
+        $nuevoToken=$this->getRtoToken();
+        if($nuevoToken["status"]=='failed'){
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => $nuevoToken["message"]
+            ];
+            return response()->json($respuestaError,400);
+        }
+        $data=[
+            'turno' => $nro_turno_rto
+        ];
+        try{
+            $request_url=$this->getRtoUrl().$this->rto_quote_url;
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,$data);
+        }catch(\Exception $e){    
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => 'RTO no responde al consultar turno'
+            ];
+            return response()->json($respuestaError,400);
+        }
+        if( $response->getStatusCode()!=200){
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => 'Fallo la consulta al RTO',
+                'token' => $nuevoToken,
+                'turno' => $nro_turno_rto
+            ];
+            return response()->json($respuestaError,400);
+        }else{
+            if($response["status"]!='success'){     
+                $respuestaError=[
+                    'status' => 'failed',
+                    'mensaje' => 'Consulta con status no exitoso'
+                ];
+                return response()->json($respuestaError,400);
+            }
+        }
+        $datos_turno=$response["turno"];
+        if($datos_turno["email"]!=$email_solicitud){
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => 'Email invalido'
+            ];
+            return response()->json($respuestaError,400);
+        }
+        // valido que el turno este pendiente
+        if($datos_turno["estado"]!="PENDIENTE"){
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => 'Su turno no se encuentra activo.'
+            ];
+            return response()->json($respuestaError,400);
+        }
+        // valido que el dominio no tenga otro turno pendiente
+        $datosturnos=Datosturno::where('dominio',$datos_turno["patente"])->get();
+        foreach($datosturnos as $datosturno){
+            if($datosturno->turno->estado=="R"){
+                $respuesta=[
+                    'status' => 'failed',
+                    'mensaje' => "Existe un turno reservado pero no confirmado para su dominio."
+                ];      
+                return response()->json($respuesta,400);
+            } 
+        }
+        $turno=Turno::where('id',$id_turno)->first();
+        if(!$turno){
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => 'El turno no existe'
+            ];
+            return response()->json($respuestaError,400);
+        }
+        $fecha_actual=new DateTime();
+        if(!($turno->estado=="D" || ($turno->estado=="R" && $turno->vencimiento<$fecha_actual))){
+            $respuestaError=[
+                        'status' => 'failed',
+                        'mensaje' => "El turno ya no se encuentra disponible. Refresque la pagina."
+                    ];
+            return response()->json($respuestaError,400);
+        }
+        $fecha=getDate();
+        if(strlen($fecha["mon"])==1)
+            $mes='0'.$fecha["mon"];
+        else 
+            $mes=$fecha["mon"];
+        $dia_actual=$fecha["year"]."-".$mes."-".$fecha["mday"];
+        $vehiculo=Precio::where('descripcion',$tipo_vehiculo)->first();
+        $precio_float=$vehiculo->precio.'.00';
+        $fecha_vencimiento=$fecha_actual->modify('+12 hours');
+        $url_request=$this->getYacareUrl().$this->yacare_payments_url;
+        $token_request=$this->getYacareToken();
+        $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
+        $referencia=$id_turno.$fecha_actual->format('dmYHis');
+        $datos_post=[
+            "buyer" => [
+                "email" => $email_solicitud,
+                "name" => $nombre_completo,
+                "surname" => ""
+            ],
+            "expirationTime" => 600,
+            "items" => [
+                [
+                "name" => "Turno RTVO Centro Express",
+                "quantity" => "1",
+                "unitPrice" => $precio_float
+                ]
+            ],
+            "notificationURL" => $this->getYacareNotifUrl(),
+            "redirectURL" => $this->getYacareRedirectUrl(),
+            "reference" => $referencia
+        ];
+        $headers_yacare=[
+            'Authorization' => $token_request
+        ];
+        try{
+            $response = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
+        }catch(\Exception $e){
+            $this->log('YACARE', 'Falló la solicitud de pago', 'NA', $turno->id, $nro_turno_rto);
+        }
+        if( $response->getStatusCode()!=200){
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => 'Fallo la solicitud de pago'
+            ];
+            return response()->json($respuestaError,400);  
+        }
+        $id_cobro=$response["paymentOrderUUID"];
+        // $id_cobro="";
+        // ACTUALIZO EL ESTADO DEL TURNO A RESERVADO
+        $data_reserva=[
+            'estado' => "R",
+            'vencimiento' => $fecha_vencimiento,
+            'id_cobro_yac' => $id_cobro
+        ];
+        $res_reservar=Turno::where('id',$turno->id)->update($data_reserva);
+        if(!$res_reservar){
+            $respuestaError=[
+                'status' => 'failed',
+                'mensaje' => 'Fallo al realizar la reserva'
+            ];
+            return response()->json($respuestaError,400);
+        }
+        $aux_carga_datos_turno=[
+            'nombre' => $nombre_completo,
+            'dominio' => $datos_turno["patente"],
+            'email' => $email_solicitud,
+            'tipo_vehiculo' => $datos_turno["tipo_de_vehiculo"],
+            'marca' => $datos_turno["marca"],
+            'modelo' => $datos_turno["modelo"],
+            'anio' => $datos_turno["anio"],
+            'combustible' => $datos_turno["combustible"],
+            'inscr_mendoza' => $datos_turno["inscripto_en_mendoza"],
+            'id_turno' => $turno->id,
+            'nro_turno_rto' => $nro_turno_rto
+        ];
+        if($turno->estado=="D"){
+            $res_guardar_datos=Datosturno::insert($aux_carga_datos_turno);
+            if(!$res_guardar_datos){
+                $this->log("CRITICO", "Fallo el alta de los datos del turno", "REVISAR", $turno->id, $nro_turno_rto, "solicitarTurno");
+            }
+        }else{
+            // voy a tener que hacer update del registro
+            $res_actualizar_datos=Datosturno::where('id_turno',$turno->id)->update($aux_carga_datos_turno);
+            if(!$res_actualizar_datos){
+                $this->log("CRITICO", "Fallo el update de los datos del turno", "REVISAR", $turno->id, $nro_turno_rto, "solicitarTurno");
+            }
+        }
+        // alta en tabla datos_turno
+        $datos_mail=new TurnoRto;
+        $datos_mail->id=$turno->id;
+        $datos_mail->fecha=$turno->fecha;
+        $datos_mail->hora=$turno->hora;
+        $datos_mail->url_pago=$response["paymentURL"];
+        $datos_mail->dominio=$datos_turno["patente"];
+        $datos_mail->nombre=$nombre_completo;
+        try{
+            Mail::to($email_solicitud)->send(new TurnoRtoM($datos_mail));
+        }catch(\Exception $e){
+            $this->log("CRITICO", "Fallo al enviar datos del turno al cliente", "MAIL", $turno->id, $nro_turno_rto, "solicitarTurno");
+        }
+        $nuevoToken=$this->getRtoToken();
+        if($nuevoToken["status"]=='failed'){
+            $this->log("CRITICO", "Fallo al obtener token previo a confirmar el turno", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
+        }
+        try{
+            $request_url=$this->getRtoUrl().$this->rto_quote_confirm_url;
+            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,array('turno' => $nro_turno_rto));
+            if( $response_rto->getStatusCode()!=200){
+                $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
+            }
+        }catch(\Exception $e){
+            $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
+        }
+        $respuesta=[
+                'status' => 'OK',
+                'url_pago' => $response["paymentURL"]
+            ];
+        return response()->json($respuesta,200);
+    }
 
     public function confirmQuote(Request $request) {
         if($request->header('Content-Type')!="application/json"){
