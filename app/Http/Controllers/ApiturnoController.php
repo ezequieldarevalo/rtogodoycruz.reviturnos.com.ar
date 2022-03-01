@@ -460,15 +460,15 @@ class ApiturnoController extends Controller
         }
         // valido que el dominio no tenga otro turno pendiente
         $datosturnos=Datosturno::where('dominio',$datos_turno["patente"])->get();
-        foreach($datosturnos as $datosturno){
-            if($datosturno->turno->estado=="R"){
-                $respuesta=[
-                    'status' => 'failed',
-                    'mensaje' => "Existe un turno reservado pero no confirmado para su dominio."
-                ];      
-                return response()->json($respuesta,400);
-            } 
-        }
+        // foreach($datosturnos as $datosturno){
+        //     if($datosturno->turno->estado=="R"){
+        //         $respuesta=[
+        //             'status' => 'failed',
+        //             'mensaje' => "Existe un turno reservado pero no confirmado para su dominio."
+        //         ];      
+        //         return response()->json($respuesta,400);
+        //     } 
+        // }
         $turno=Turno::where('id',$id_turno)->first();
         if(!$turno){
             $respuestaError=[
@@ -552,9 +552,9 @@ class ApiturnoController extends Controller
             'dominio' => $datos_turno["patente"],
             'email' => $email_solicitud,
             'tipo_vehiculo' => $datos_turno["tipo_de_vehiculo"],
-            'marca' => $datos_turno["marca"],
-            'modelo' => $datos_turno["modelo"],
-            'anio' => $datos_turno["anio"],
+            'marca' => $datos_turno["marca"] || "SIN ESPECIFICAR",
+            'modelo' => $datos_turno["modelo"] || "SIN ESPECIFICAR",
+            'anio' => $datos_turno["anio"] || 2000,
             'combustible' => $datos_turno["combustible"],
             'inscr_mendoza' => $datos_turno["inscripto_en_mendoza"],
             'id_turno' => $turno->id,
