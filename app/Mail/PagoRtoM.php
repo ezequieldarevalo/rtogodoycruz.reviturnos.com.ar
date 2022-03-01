@@ -25,7 +25,7 @@ class PagoRtoM extends Mailable
      *
      * @return void
      */
-    public function __construct(TurnoRto $turnomail)
+    public function __construct(PagoRto $turnomail)
     {
         $this->turnomail = $turnomail;
     }
