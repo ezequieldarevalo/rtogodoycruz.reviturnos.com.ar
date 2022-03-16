@@ -856,6 +856,11 @@ class ApiturnoController extends Controller
             $res_update_quote_data=Datosturno::where('id_turno',$quote->id)->update($quote_data_aux_loader);
             if(!$res_update_quote_data){
                 $this->log("CRITICO", "Fallo el update de los datos del turno", "REVISAR", $quote->id, $rto_quote_number, "solicitarTurno");
+            }else{
+                $res_save_quote_data=Datosturno::insert($quote_data_aux_loader);
+                if(!$res_save_quote_data){
+                    $this->log("CRITICO", "Fallo el alta de los datos del turno", "REVISAR", $quote->id, $rto_quote_number, "solicitarTurno");
+                }
             }
         }
         // alta en tabla datos_turno
