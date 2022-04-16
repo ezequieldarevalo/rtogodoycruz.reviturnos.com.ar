@@ -262,7 +262,7 @@ class ApiturnoController extends Controller
         }
         // valido que el dato numero de turno sea un entero y se encuentre presente
         $validator = Validator::make($request->all(), [
-            'nro_turno_rto' => 'required|integer'
+            'tipoVehiculo' => 'required|string|max:100'
         ]);
         if ($validator->fails()) { 
             $error_response=[
@@ -271,54 +271,10 @@ class ApiturnoController extends Controller
             ];      
             return response()->json($error_response,400);
         }
-        $rto_quote_number=$request->input('nro_turno_rto');
-        // obtengo token de plataforma RTO
-        $newToken=$this->getRtoToken();
-        if($newToken["status"]=='failed'){
-            $error_response=[
-                'status' => 'failed',
-                'message' => $newToken["message"]
-            ];
-            return response()->json($error_response,404);
-        }
-        // preparo los datos a postear a RTO Mendoza
-        $post_data=[
-            'turno' => $rto_quote_number
-        ];
-        // ejecuto la consulta del turno a la plataforma RTO
-        try{
-            $request_url=$this->getRtoUrl().$this->rto_quote_url;
-            $res_quote_data = Http::withOptions(['verify' => false])->withToken($newToken["token"])->post($request_url,$post_data);
-        }catch(\Exception $e){    
-            $response_error=[
-                'reason' => 'No response from RTO when retrieving quote data'
-            ];
-            return response()->json($response_error,404);
-        }
-        // valido la respuesta de RTO
-        if( $res_quote_data->getStatusCode()!=200){
-            $error_response=[
-                'reason' => 'NOT_IN_RTO'
-            ];
-            return response()->json($error_response,404);
-        }else{
-            if($res_quote_data['status']!='success'){      
-                $error_response=[
-                    'reason' => 'NOT_IN_RTO'
-                ];
-                return response()->json($error_response,404);
-            }
-        }
-        // si el status code es 200 y el status es success obtengo los datos del turno
-        $quote_data=$res_quote_data["turno"];
-        // valido que el turno este pendiente
-        if($quote_data["estado"]!="PENDIENTE"){
-            $error_response=[
-                'reason' => 'INACTIVE_QUOTE'
-            ];
-            return response()->json($error_response,404);
-        }
-        $vehicle=Precio::where('descripcion',$quote_data["tipo_de_vehiculo"])->first();
+        $rto_quote_number=0;
+        $tipo_vehiculo=$request->input('tipoVehiculo');
+
+        $vehicle=Precio::where('descripcion',$tipo_vehiculo)->first();
         if(!$vehicle){
             $error_response=[
                 'reason' => 'INVALID_VEHICLE'
@@ -368,7 +324,7 @@ class ApiturnoController extends Controller
         }
         $success_response=[
             'status' => 'success',
-            'tipo_vehiculo' => $quote_data["tipo_de_vehiculo"],
+            'tipo_vehiculo' => $tipo_vehiculo,
             'precio' => $vehicle->precio,
             'dias' => $days_array,
             'turnos' => $quotes
@@ -615,9 +571,13 @@ class ApiturnoController extends Controller
         $validator = Validator::make($request->all(), [
             'origen' => 'required|string|max:1',
             'email' => 'required|string|max:150',
+            'nombre' => 'required|string|max:200',
+            'dominio' => 'required|string|max:20',
+            'anio' => 'required|string|max:20',
+            'telefono' => 'required|string|max:20',
+            'combustible' => 'required|string|max:20',
             'id_turno' => 'required|integer',
             'tipo_vehiculo' => 'required|string|max:50',
-            'nro_turno_rto' => 'required|integer',
             'plataforma_pago' => 'required|string|max:20'
         ]);
         if ($validator->fails()) {
@@ -627,62 +587,22 @@ class ApiturnoController extends Controller
             ];      
             return response()->json($error_response,400);
         }
-        $rto_quote_number=$request->input("nro_turno_rto");
+        $rto_quote_number=0;
         $request_email=$request->input("email");
+        $request_name=$request->input("nombre");
+        $request_domain=$request->input("dominio");
+        $request_year=$request->input("anio");
+        $request_phone=$request->input("telefono");
+        $request_fuel=$request->input("combustible");
         $quote_id=$request->input("id_turno");
         $origin=$request->input("origen");
         $vehicle_type=$request->input("tipo_vehiculo");
         $payment_platform=$request->input("plataforma_pago");
-        $newToken=$this->getRtoToken();
-        if($newToken["status"]=='failed'){
-            $error_response=[
-                'reason' => 'TOKEN'
-            ];
-            return response()->json($error_response,500);
-        }
-        $data=[
-            'turno' => $rto_quote_number
-        ];
-        try{
-            $request_url=$this->getRtoUrl().$this->rto_quote_url;
-            $res_quote_data = Http::withOptions(['verify' => false])->withToken($newToken["token"])->post($request_url,$data);
-        }catch(\Exception $e){   
-            $error_response=[
-                'reason' => 'RTO_NOT_WORKING'
-            ];
-            return response()->json($error_response,404);
-        }
-        if( $res_quote_data->getStatusCode()!=200){
-            $error_response=[
-                'reason' => 'RTO_NOT_FOUND'
-            ];
-            return response()->json($error_response,404);  
-        }else{
-            if($res_quote_data["status"]!='success'){ 
-                $error_response=[
-                    'reason' => 'RTO_NOT_FOUND'
-                ];
-                return response()->json($error_response,404);
-            }
-        }
-        $quote_data=$res_quote_data["turno"];
-        if($quote_data["email"]!=$request_email){
-            $error_response=[
-                'reason' => 'INVALID_EMAIL'
-            ];
-            return response()->json($error_response,404);
-        }
-        // valido que el turno este pendiente
-        if($quote_data["estado"]!="PENDIENTE"){
-            $error_response=[
-                'reason' => 'INACTIVE_QUOTE'
-            ];
-            return response()->json($error_response,404);
-        }
+        
         $currentDate=new DateTime();
         // valido que el dominio no tenga otro turno pendiente
         if($this->getValidatePendingQuotes()){
-            $duplicated_domain_list=Datosturno::where('dominio',$quote_data["patente"])->get();
+            $duplicated_domain_list=Datosturno::where('dominio',$request_domain)->get();
             foreach($duplicated_domain_list as $duplicated_domain){
                 $duplicated_domain_quote=Turno::where('id',$duplicated_domain["id_turno"])->first();
                 if($duplicated_domain_quote){
@@ -724,7 +644,7 @@ class ApiturnoController extends Controller
             $headers_yacare=[
                 'Authorization' => $this->getYacareToken()
             ];
-            $complete_name=$quote_data["nombre"].' '.$quote_data["apellido"];
+            $complete_name=$request_name;
             $datos_post=[
                 "buyer" => [
                     "email" => $request_email,
@@ -746,7 +666,7 @@ class ApiturnoController extends Controller
             try{
                 $res_yacare = Http::withHeaders($headers_yacare)->post($request_url,$datos_post);
             }catch(\Exception $e){
-                $this->log("YACARE", "Fallo la solicitud de pago", "NA", $turno->id, $nro_turno_rto, "solicitarTurno");
+                $this->log("YACARE", "Fallo la solicitud de pago", "NA", $turno->id, $rto_quote_number, "solicitarTurno");
             }
             if($res_yacare->getStatusCode()!=200){
                 $error_response=[
@@ -769,8 +689,7 @@ class ApiturnoController extends Controller
                 "external_reference" => $reference,
                 "notification_url" => $this->getMPNotifUrl(),
                 "payer" => [
-                    "name" => $quote_data["nombre"],
-                    "surname" => $quote_data["apellido"],
+                    "name" => $request_name,
                     "email" => $request_email
                 ],
                 "items" => [
@@ -834,15 +753,15 @@ class ApiturnoController extends Controller
             return response()->json($error_response,404);
         }
         $quote_data_aux_loader=[
-            'nombre' => $quote_data["nombre"].' '.$quote_data["apellido"],
-            'dominio' => $quote_data["patente"],
+            'nombre' => $request_name,
+            'dominio' => $request_domain,
             'email' => $request_email,
-            'tipo_vehiculo' => $quote_data["tipo_de_vehiculo"],
-            'marca' => $quote_data["marca"] || "SIN ESPECIFICAR",
-            'modelo' => $quote_data["modelo"] || "SIN ESPECIFICAR",
-            'anio' => $quote_data["anio"] || 2000,
-            'combustible' => $quote_data["combustible"],
-            'inscr_mendoza' => $quote_data["inscripto_en_mendoza"],
+            'tipo_vehiculo' => $vehicle_type,
+            'marca' => "SIN ESPECIFICAR",
+            'modelo' => "SIN ESPECIFICAR",
+            'anio' => $request_year,
+            'combustible' => $request_fuel,
+            'inscr_mendoza' => "SI",
             'id_turno' => $quote->id,
             'nro_turno_rto' => $rto_quote_number
         ];
@@ -864,28 +783,9 @@ class ApiturnoController extends Controller
         $mail_data->fecha=$quote->fecha;
         $mail_data->hora=$quote->hora;
         $mail_data->url_pago=$payment_url;
-        $mail_data->dominio=$quote_data["patente"];
-        $mail_data->nombre=$quote_data["nombre"].' '.$quote_data["apellido"];
-        try{
-            Mail::to($request_email)->send(new TurnoRtoM($mail_data));
-        }catch(\Exception $e){
-            $this->log("CRITICO", "Fallo al enviar datos del turno al cliente", "MAIL", $quote->id, $rto_quote_number, "solicitarTurno");
-        }
-        $newToken=$this->getRtoToken();
-        if($newToken["status"]=='failed'){
-            $this->log("CRITICO", "Fallo al obtener token previo a confirmar el turno", "CONFIRM", $quote->id, "", "notification");
-        }
-        if($this->getRtoConfirmQuotes()){
-            try{
-                $request_url=$this->getRtoUrl().$this->rto_quote_confirm_url;
-                $response_rto = Http::withOptions(['verify' => false])->withToken($newToken["token"])->post($request_url,array('turno' => $rto_quote_number));
-                if( $response_rto->getStatusCode()!=200){
-                    $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $quote->id, $rto_quote_number, "notification");
-                }
-            }catch(\Exception $e){
-                $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $quote->id, $rto_quote_number, "notification");
-            }
-        }
+        $mail_data->dominio=$request_domain;
+        $mail_data->nombre=$request_name;
+        
         $success_response=[
                 'url_pago' => $payment_url
             ];
