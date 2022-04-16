@@ -638,7 +638,7 @@ class ApiturnoController extends Controller
         $float_price=$vehicle->precio.'.00';
         $expiration_minutes=$this->getPaymentExpirationMinutes();
         $expiration_date=$currentDate->modify('+'.$expiration_minutes.' min');
-        $reference=$quote_id.$currentDate->format('dmYHis').$quote_data["patente"];
+        $reference=$quote_id.$currentDate->format('dmYHis').$request_domain;
         if($payment_platform=='yacare'){
             $request_url=$this->getYacareUrl().$this->yacare_payments_url;
             $headers_yacare=[
