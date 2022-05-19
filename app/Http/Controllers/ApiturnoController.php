@@ -763,11 +763,9 @@ class ApiturnoController extends Controller
             'combustible' => $request_fuel,
             'inscr_mendoza' => "SI",
             'id_turno' => $quote->id,
-            'nro_turno_rto' => $rto_quote_number,
-            'telefono' => $request_phone
+            'nro_turno_rto' => $rto_quote_number
         ];
         if($quote->estado=="D"){
-            
             $res_save_quote_data=Datosturno::insert($quote_data_aux_loader);
             if(!$res_save_quote_data){
                 $this->log("CRITICO", "Fallo el alta de los datos del turno", "REVISAR", $quote->id, $rto_quote_number, "solicitarTurno");
@@ -779,22 +777,14 @@ class ApiturnoController extends Controller
                 $this->log("CRITICO", "Fallo el update de los datos del turno", "REVISAR", $quote->id, $rto_quote_number, "solicitarTurno");
             }
         }
-
         // alta en tabla datos_turno
         $mail_data=new TurnoRto;
         $mail_data->id=$quote->id;
         $mail_data->fecha=$quote->fecha;
         $mail_data->hora=$quote->hora;
-        $mail_data->url=$payment_url;
+        $mail_data->url_pago=$payment_url;
         $mail_data->dominio=$request_domain;
         $mail_data->nombre=$request_name;
-        $mail_data->plant_name=config('app.plant_name');
-
-        try{
-            Mail::to($request_email)->send(new TurnoRtoM($mail_data));
-        }catch(\Exception $e){
-            $this->log("CRITICO", "Fallo al enviar datos del turno al cliente", "MAIL", $quote->id, $rto_quote_number, "solicitarTurno");
-        }
         
         $success_response=[
                 'url_pago' => $payment_url

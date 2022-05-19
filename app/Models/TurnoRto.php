@@ -15,8 +15,7 @@ class TurnoRto extends Model
     	"hora",
     	"url",
         "dominio",
-        "nombre",
-        "plant_name"
+        "nombre"
     ];
 
 }

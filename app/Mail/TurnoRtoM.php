@@ -37,6 +37,7 @@ class TurnoRtoM extends Mailable
      */
     public function build()
     {
-        return $this->subject('Turno RTO Mendoza')->view('emails.nuevoturno');
+        return $this->from('turnos@rtogodoycruz.com.ar','RTO Godoy Cruz')
+            ->subject('Turno RTO Mendoza')->view('emails.nuevoturno');
     }
 }
