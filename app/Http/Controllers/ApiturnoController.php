@@ -90,6 +90,26 @@ class ApiturnoController extends Controller
         return config('plant.validate_pending_quotes');
     }
 
+    public function getPaymentCashExpirationMinutes(){
+        return config('plant.cash_expiration_minutes');
+    }
+
+    public function getMarginPostExpirationMinutes(){
+        return config('plant.margin_post_expiration_minutes');
+    }
+
+    public function getExcludedPaymentMethods(){
+        return config('mercadopago.excluded_payment_methods');
+    }
+
+    public function getCashExcludedPaymentMethods(){
+        return config('mercadopago.cash_excluded_payment_methods');
+    }
+
+    public function getPlantName(){
+        return config('app.plant_name');
+    }
+
     public function log($type, $description, $fix, $quote_id, $rto_quote_id, $service ){
         $error=[
             "tipo" => $type,
@@ -416,15 +436,7 @@ class ApiturnoController extends Controller
         }
         // valido que el dominio no tenga otro turno pendiente
         $datosturnos=Datosturno::where('dominio',$datos_turno["patente"])->get();
-        // foreach($datosturnos as $datosturno){
-        //     if($datosturno->turno->estado=="R"){
-        //         $respuesta=[
-        //             'status' => 'failed',
-        //             'mensaje' => "Existe un turno reservado pero no confirmado para su dominio."
-        //         ];      
-        //         return response()->json($respuesta,400);
-        //     } 
-        // }
+
         $turno=Turno::where('id',$id_turno)->first();
         if(!$turno){
             $respuestaError=[
@@ -598,7 +610,7 @@ class ApiturnoController extends Controller
         $origin=$request->input("origen");
         $vehicle_type=$request->input("tipo_vehiculo");
         $payment_platform=$request->input("plataforma_pago");
-        
+
         $currentDate=new DateTime();
         // valido que el dominio no tenga otro turno pendiente
         if($this->getValidatePendingQuotes()){
@@ -685,6 +697,27 @@ class ApiturnoController extends Controller
             $headers_mercadopago=[
                 'Authorization' => "Bearer ".$this->getMPToken()
             ];
+            $plant_name=$this->getPlantName();
+            
+            $excluded_payment_methods=[];
+            if($plant_name=='lasheras' || $plant_name=='maipu'){
+                
+                $cash_methods_limit_minutes=$this->getPaymentCashExpirationMinutes()+$this->getMarginPostExpirationMinutes();
+                
+                $mp_cash_methods_limit_time=$expiration_date;
+                $mp_cash_methods_limit_time->modify('+'.$cash_methods_limit_minutes.' minutes');
+                $mp_cash_methos_limit_time_formatted=$mp_cash_methods_limit_time->format('Y-m-dH:i:s');
+                $quote_date=$quote->fecha.$quote->hora;
+                $allow_cash_methods=$mp_cash_methos_limit_time_formatted<$quote_date;
+                
+                if($allow_cash_methods) {
+                    $excluded_payment_methods=$this->getCashExcludedPaymentMethods();
+                }else{
+                    $excluded_payment_methods=$this->getExcludedPaymentMethods();
+                }
+            }else{
+                $excluded_payment_methods=$this->getExcludedPaymentMethods();
+            }
             $datos_post=[
                 "external_reference" => $reference,
                 "notification_url" => $this->getMPNotifUrl(),
@@ -700,28 +733,7 @@ class ApiturnoController extends Controller
                         "currency_id" => "ARS"
                     ]
                 ],
-                "payment_methods" => [
-                    "excluded_payment_methods" => [
-                        [
-                            "id" => "bapropagos"
-                        ],
-                        [
-                            "id" => "rapipago"
-                        ],
-                        [
-                            "id" => "pagofacil"
-                        ],
-                        [
-                            "id" => "cargavirtual"
-                        ],
-                        [
-                            "id" => "redlink"
-                        ],
-                        [
-                            "id" => "cobroexpress"
-                        ]
-                    ]
-                ],
+                "payment_methods" => $excluded_payment_methods,
                 "expires" => true,
                 "expiration_date_to"=> $mp_expiration_date
             ];
