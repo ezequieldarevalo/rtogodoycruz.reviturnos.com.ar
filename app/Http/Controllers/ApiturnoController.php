@@ -110,6 +110,14 @@ class ApiturnoController extends Controller
         return config('app.plant_name');
     }
 
+    public function getFormattedPlantName($name){
+        if($name=='lasheras') return 'Revitotal - Las Heras';
+        if($name=='maipu') return 'Revitotal - Maipu';
+        if($name=='godoycruz') return 'Godoy Cruz';
+        if($name=='sanmartin') return 'San Martin - Mendoza';
+        return '';
+    }
+
     public function log($type, $description, $fix, $quote_id, $rto_quote_id, $service ){
         $error=[
             "tipo" => $type,
@@ -610,6 +618,8 @@ class ApiturnoController extends Controller
         $origin=$request->input("origen");
         $vehicle_type=$request->input("tipo_vehiculo");
         $payment_platform=$request->input("plataforma_pago");
+        $plant_name=$this->getPlantName();
+        $formatted_plant_name=$this->getFormattedPlantName($plant_name);
 
         $currentDate=new DateTime();
         // valido que el dominio no tenga otro turno pendiente
@@ -649,7 +659,8 @@ class ApiturnoController extends Controller
         $vehicle=Precio::where('descripcion',$vehicle_type)->first();
         $float_price=$vehicle->precio.'.00';
         $expiration_minutes=$this->getPaymentExpirationMinutes();
-        $expiration_date=$currentDate->modify('+'.$expiration_minutes.' min');
+        $expiration_date=clone $currentDate;
+        $expiration_date->modify('+'.$expiration_minutes.' minutes');
         $reference=$quote_id.$currentDate->format('dmYHis').$request_domain;
         if($payment_platform=='yacare'){
             $request_url=$this->getYacareUrl().$this->yacare_payments_url;
@@ -666,7 +677,7 @@ class ApiturnoController extends Controller
                 "expirationTime" => $expiration_minutes,
                 "items" => [
                     [
-                    "name" => "Turno RTO Godoy Cruz",
+                    "name" => "Turno RTO ".$formatted_plant_name,
                     "quantity" => "1",
                     "unitPrice" => $float_price
                     ]
@@ -689,26 +700,30 @@ class ApiturnoController extends Controller
             $payment_id='Y-'.$res_yacare["paymentOrderUUID"];
             $payment_url=$res_yacare["paymentURL"];
         }else{
-            $mp_aux_expiration_date=$expiration_date;
+            $mp_aux_expiration_date=clone $currentDate;
+            $mp_aux_expiration_date->modify('+ '.$this->getPaymentCashExpirationMinutes().' minutes');
+            $mp_aux_cash_expiration_date=clone $currentDate;
+            $mp_aux_cash_expiration_date->modify('+ '.$this->getPaymentCashExpirationMinutes().' minutes');
             $mp_expiration_day=$mp_aux_expiration_date->format('Y-m-d');
             $mp_expiration_time=$mp_aux_expiration_date->format('H:i:s');
             $mp_expiration_date=$mp_expiration_day.'T'.$mp_expiration_time.'.000-03:00';
+            $mp_cash_expiration_day=$mp_aux_cash_expiration_date->format('Y-m-d');
+            $mp_cash_expiration_time=$mp_aux_cash_expiration_date->format('H:i:s');
+            $mp_cash_expiration_date=$mp_cash_expiration_day.'T'.$mp_cash_expiration_time.'.000-03:00';
             $request_url=$this->getMPUrl().$this->mp_preferences_url;
             $headers_mercadopago=[
                 'Authorization' => "Bearer ".$this->getMPToken()
             ];
-            $plant_name=$this->getPlantName();
-            
             $excluded_payment_methods=[];
             if($plant_name=='lasheras' || $plant_name=='maipu'){
                 
                 $cash_methods_limit_minutes=$this->getPaymentCashExpirationMinutes()+$this->getMarginPostExpirationMinutes();
                 
-                $mp_cash_methods_limit_time=$expiration_date;
+                $mp_cash_methods_limit_time=clone $expiration_date;
                 $mp_cash_methods_limit_time->modify('+'.$cash_methods_limit_minutes.' minutes');
-                $mp_cash_methos_limit_time_formatted=$mp_cash_methods_limit_time->format('Y-m-dH:i:s');
+                $mp_cash_methods_limit_time_formatted=$mp_cash_methods_limit_time->format('Y-m-dH:i:s');
                 $quote_date=$quote->fecha.$quote->hora;
-                $allow_cash_methods=$mp_cash_methos_limit_time_formatted<$quote_date;
+                $allow_cash_methods=$mp_cash_methods_limit_time_formatted<$quote_date;
                 
                 if($allow_cash_methods) {
                     $excluded_payment_methods=$this->getCashExcludedPaymentMethods();
@@ -735,7 +750,8 @@ class ApiturnoController extends Controller
                 ],
                 "payment_methods" => $excluded_payment_methods,
                 "expires" => true,
-                "expiration_date_to"=> $mp_expiration_date
+                "expiration_date_to"=> $mp_expiration_date,
+                "date_of_expiration" => $mp_cash_expiration_date,
             ];
             try{
                 $res_mp = Http::withHeaders($headers_mercadopago)->post($request_url,$datos_post);
@@ -805,7 +821,7 @@ class ApiturnoController extends Controller
         $mail_data->url=$payment_url;
         $mail_data->dominio=$request_domain;
         $mail_data->nombre=$request_name;
-        $mail_data->plant_name=config('app.plant_name');
+        $mail_data->plant_name=$formatted_plant_name;
 
         try{
             Mail::to($request_email)->send(new TurnoRtoM($mail_data));
