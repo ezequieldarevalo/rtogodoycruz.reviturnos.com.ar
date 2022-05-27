@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\PagoRto;
 use App\Mail\PagoRtoM;
 use Config;
+use DateTime;
 
 class PagosController extends Controller
 {
@@ -328,6 +329,19 @@ class PagosController extends Controller
                 'status' => 'OK'
             ];      
             return response()->json($respuesta,200);
+        }
+        if($response["status"]=='pending' && ($response["payment_method_id"]=='rapipago' || $response["payment_method_id"]=='pagofacil')){
+            
+            $new_date_of_expiration=DateTime::createFromFormat('Y-m-d\TH:i:s.vP', $response["date_of_expiration"]);
+            $new_date_of_expiration->setTimezone(new \DateTimeZone('-0300'));
+            $new_date_of_expiration_formatted=$new_date_of_expiration->format('Y-m-d H:i:s');
+            // actualizar la tabla turnos con la nueva fecha de vencimiento
+            $res_pagar=Turno::where('id',$turno->id)->update(array('vencimiento' => $new_date_of_expiration_formatted));
+            $respuesta=[
+                'status' => 'OK'
+            ];      
+            return response()->json($respuesta,200);
+
         }
     }
 }
