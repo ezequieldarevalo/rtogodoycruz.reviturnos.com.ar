@@ -115,6 +115,7 @@ class ApiturnoController extends Controller
         if($name=='maipu') return 'Revitotal - Maipu';
         if($name=='godoycruz') return 'Godoy Cruz';
         if($name=='sanmartin') return 'San Martin - Mendoza';
+        if($name=='rivadavia') return 'Rivadavia';
         return '';
     }
 
