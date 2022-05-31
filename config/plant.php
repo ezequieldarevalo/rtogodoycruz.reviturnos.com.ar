@@ -14,4 +14,7 @@ return [
     // margin time to expand range of cash payments
     'margin_post_expiration_minutes' => env('MARGIN_POST_CASH_PAYMENT_TIME_MINUTES', 0),
 
+    // indicates if ignoring vehicle type at getting quotes time
+    'ignore_lines' => env('IGNORE_LINES', false),
+
 ];
