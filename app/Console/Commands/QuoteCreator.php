@@ -7,9 +7,6 @@ use App\Models\Turno;
 use App\Models\Linea;
 use App\Models\Planta;
 use App\Models\Feriado;
-use App\Models\Franco;
-use App\Models\Fd;
-use App\Models\Lune;
 use App\Models\Config;
 use App\Models\Day;
 
