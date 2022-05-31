@@ -119,6 +119,10 @@ class ApiturnoController extends Controller
         return '';
     }
 
+    public function getIgnoreLines(){
+        return config('plant.ignore_lines');
+    }
+
     public function log($type, $description, $fix, $quote_id, $rto_quote_id, $service ){
         $error=[
             "tipo" => $type,
@@ -302,7 +306,7 @@ class ApiturnoController extends Controller
         }
         $rto_quote_number=0;
         $tipo_vehiculo=$request->input('tipoVehiculo');
-        $plant_name=$this->getPlantName();
+        $ignore_lines=$this->getIgnoreLines();
 
         $vehicle=Precio::where('descripcion',$tipo_vehiculo)->first();
         if(!$vehicle){
@@ -318,7 +322,7 @@ class ApiturnoController extends Controller
         $conditions=[
             "tipo_vehiculo" => $vehicle->tipo_vehiculo
         ];
-        if($plant_name=='lasheras' || $plant_name=='maipu'){
+        if($ignore_lines){
             $lines = Linea::get();
         }else{
             $lines = Linea::where($conditions)->get();
