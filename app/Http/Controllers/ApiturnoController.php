@@ -302,6 +302,7 @@ class ApiturnoController extends Controller
         }
         $rto_quote_number=0;
         $tipo_vehiculo=$request->input('tipoVehiculo');
+        $plant_name=$this->getPlantName();
 
         $vehicle=Precio::where('descripcion',$tipo_vehiculo)->first();
         if(!$vehicle){
@@ -317,7 +318,11 @@ class ApiturnoController extends Controller
         $conditions=[
             "tipo_vehiculo" => $vehicle->tipo_vehiculo
         ];
-        $lines = Linea::where($conditions)->get();
+        if($plant_name=='lasheras' || $plant_name=='maipu'){
+            $lines = Linea::get();
+        }else{
+            $lines = Linea::where($conditions)->get();
+        }
         $quote_lines=array();
         foreach($lines as $line){
             array_push($quote_lines,$line->id);
