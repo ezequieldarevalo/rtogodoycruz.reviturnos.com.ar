@@ -63,8 +63,7 @@ class QuoteCreator extends Command
         //calculo el primer dia de turnos el cual corresponde a dos dias posteriores al actual
         $process_date=date("Y-m-d",strtotime($current_date));
         //calculo el ultimo dia de turnos
-        // $last_day=date("Y-m-d",strtotime($current_date."+ ".$config->cant_dias_disponibles." days"));
-        $last_day=date("Y-m-d",strtotime($current_date."+ 3 days"));
+        $last_day=date("Y-m-d",strtotime($current_date."+ ".$config->cant_dias_disponibles." days"));
         //	importo dias
 		$days_config=Day::all();
 		// paso a un array lo obtenido
