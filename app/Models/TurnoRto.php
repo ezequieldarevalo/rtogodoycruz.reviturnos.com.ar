@@ -16,7 +16,9 @@ class TurnoRto extends Model
     	"url",
         "dominio",
         "nombre",
-        "plant_name"
+        "plant_name",
+        "no_payment",
+        "time_to_pay"
     ];
 
 }

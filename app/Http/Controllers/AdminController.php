@@ -23,6 +23,11 @@ use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
+
+    public function getPlantName(){
+        return config('app.plant_name');
+    }
+
     public function obtenerTurnosDiaActual(Request $request){
         $fecha_actual=new DateTime();
         $fecha_actual->modify('-3 hours');
@@ -150,10 +155,11 @@ class AdminController extends Controller
         $metodo_pago=$request->input("metodo_pago");
         $id_cobro=$request->input("id_pago");
         $turno=Turno::find($id_turno);
-        if($turno->estado!="C" || $turno->origen!="A"){
+        $plant_name=$this->getPlantName();
+        if($turno->estado!="C" || ($turno->origen!="A" && $plant_name!='sanmartin')){
             $respuesta=[
                 'status' => 'failed',
-                'mensaje' => "No se puede registrar el pago de este turno."
+                'mensaje' => "No se puede registrar el pago de este turno.d"
             ];       
             return $respuesta;
         }
@@ -322,7 +328,10 @@ class AdminController extends Controller
         $id_turno_nuevo=$request->input("id_turno_nuevo");
         $turno_anterior=Turno::find($id_turno_ant);
         $turno_nuevo=Turno::find($id_turno_nuevo);
-        if($turno_anterior->estado!="P"){
+        $plant_name=$this->getPlantName();
+        $not_confirmed_quote_with_payment=($plant_name!='sanmartin' && $turno_anterior->estado!="P");
+        $not_confirmed_quote_without_payment=($plant_name=='sanmartin' && $turno_anterior->estado!="C");
+        if($not_confirmed_quote_with_payment || $not_confirmed_quote_without_payment){
             $respuesta=[
                 'status' => 'failed',
                 'mensaje' => "El turno a reprogramar debe estar pagado."
