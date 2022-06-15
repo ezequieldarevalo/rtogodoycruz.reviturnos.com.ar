@@ -110,6 +110,14 @@ class ApiturnoController extends Controller
         return config('app.plant_name');
     }
 
+    public function getNoPayment(){
+        return config('app.no_payment');
+    }
+
+    public function minutesToHours($minutes){
+        return floor($minutes / 60);
+    }
+
     public function getFormattedPlantName($name){
         if($name=='lasheras') return 'Revitotal - Las Heras';
         if($name=='maipu') return 'Revitotal - Maipu';
@@ -135,155 +143,6 @@ class ApiturnoController extends Controller
         Logerror::insert($error);
     }
 
-    // funcion que busca el token en la tabla, luego si esta vencido obtiene otro y lo guarda
-    public function getRtoToken(){
-        $currentToken = Token::first();
-        $currentDate=date("Y-m-d H:i:s");
-        if($currentDate<$currentToken["fecha_expiracion"]){
-            $success_response=[
-                'status' => 'success',
-                'token' => $currentToken["token"]
-            ];
-            return $success_response;
-        }else{
-            $rto_plant_credentials=[
-                 'email' => $this->getRtoUser(),
-                 'password' => $this->getRtoPassword()
-            ];
-            try{
-                $url_request=$this->getRtoUrl().$this->rto_login_url;
-                $res_rto_login = Http::withOptions(['verify' => false])->post($url_request, $rto_plant_credentials);
-                if($res_rto_login->getStatusCode()!=200){
-                    $error_response=[
-                        'status' => 'failed',
-                        'token' => ''
-                    ];
-                    return $error_response;
-                }else{
-                    $newToken=[
-                        'token' => $res_rto_login["access_token"],
-                        'fecha_expiracion' => $res_rto_login["expires_at"]
-                    ];
-                    $updateToken=Token::where('id',1)->update($newToken);
-                    $success_response=[
-                        'status' => 'success',
-                        'token' => $newToken["token"]
-                    ];
-                    return $success_response;
-                }
-            }catch(\Exception $e){
-                $error_response=[
-                    'status' => 'failed',
-                    'message' => 'No response from RTO when trying to login'
-                ];
-                return $error_response;
-            }
-        }
-    }
-
-    public function validateQuote(Request $request){
-        if($request->header('Content-Type')!="application/json"){
-            $respuestaError=[
-                'status' => 'failed',
-                'message' => "Debe enviar datos en formato json"
-            ];    
-            return response()->json($respuestaError,400);
-        }
-        $validator = Validator::make($request->all(), [
-            'nro_turno_rto' => 'required|integer'
-        ]);
-        if ($validator->fails()) {
-            $respuestaError=[
-                'status' => 'failed',
-                'message' => "Datos inválidos"
-            ];    
-            return response()->json($respuestaError,400);
-        }
-        $nro_turno_rto=$request->input('nro_turno_rto');
-        $nuevoToken=$this->getRtoToken();
-        if($nuevoToken["status"]=='failed'){
-            $respuestaError=[
-                'status' => 'failed',
-                'message' => $nuevoToken["message"]
-            ];
-            return response()->json($respuestaError,400);
-        }
-        $data=[
-            'turno' => $nro_turno_rto
-        ];
-        try{
-            $request_url=$this->getRtoUrl().$this->rto_quote_url;
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,$data);
-        }catch(\Exception $e){
-            $respuestaError=[
-                'status' => 'failed',
-                'message' => 'RTO no responde al consultar turno'
-            ];
-            return response()->json($respuestaError,400);
-        }
-        if($response->getStatusCode()!=200){
-            $respuestaError=[
-                'status' => 'failed',
-                'message' => 'El turno ingresado no se encuentra disponible para hacer la RTO'
-            ];
-            return response()->json($respuestaError,400);
-        }else{
-            if($response["status"]!='success'){    
-                $respuestaError=[
-                    'status' => 'failed',
-                    'message' => 'El turno ingresado no se encuentra disponible para hacer la RTO'
-                ];
-                return response()->json($respuestaError,400);
-            }
-        }
-        $datos_turno=$response["turno"];
-        if($datos_turno["estado"]!="PENDIENTE"){
-            $respuestaError=[
-                'status' => 'failed',
-                'message' => 'Su turno no se encuentra activo.'
-            ];
-            return response()->json($respuestaError,400);
-        }
-        $vehiculo=Precio::where('descripcion',$datos_turno["tipo_de_vehiculo"])->first();
-        if(!$vehiculo){
-            $respuestaError=[
-                'status' => 'failed',
-                'message' => 'Tipo de vehiculo no valido.'
-            ];
-            return response()->json($respuestaError,400);
-        }
-        $dia_actual=new DateTime();
-        $conditions=[
-            "tipo_vehiculo" => $vehiculo->tipo_vehiculo
-        ];
-        $lineas = Linea::where($conditions)->get();
-        $lineas_turnos=array();
-        foreach($lineas as $linea){
-            array_push($lineas_turnos,$linea->id);
-        }
-        $fecha_actual=new DateTime();
-        $fecha_actual_formateada=$fecha_actual->format('Y-m-d');
-        $conditions=[
-            ['estado','=','D'],
-            ['origen','=','T'],
-            ['fecha','>=',$fecha_actual_formateada]
-        ];
-        $conditions2=[
-            ['estado','=','R'],
-            ['origen','=','T'],
-            ['fecha','>=',$fecha_actual_formateada],
-            ['vencimiento','<',$dia_actual]            
-        ];
-        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->orWhere($conditions2)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->get();
-        $respuestaOK=[
-            'status' => 'success',
-            'tipo_vehiculo' => $datos_turno["tipo_de_vehiculo"],
-            'precio' => $vehiculo->precio,
-            'turnos' => $turnos
-        ];
-        return response()->json($respuestaOK,200);
-    }
-
     public function getAvailableQuotes(Request $request){
         // valido que el dato venga en formato JSON
         if($request->header('Content-Type')!="application/json"){
@@ -307,6 +166,7 @@ class ApiturnoController extends Controller
         $rto_quote_number=0;
         $tipo_vehiculo=$request->input('tipoVehiculo');
         $ignore_lines=$this->getIgnoreLines();
+        $plant_name=$this->getPlantName();
 
         $vehicle=Precio::where('descripcion',$tipo_vehiculo)->first();
         if(!$vehicle){
@@ -342,7 +202,8 @@ class ApiturnoController extends Controller
             ['fecha','>',$currentDay],
             ['vencimiento','<',$date_vs_expiration]            
         ];
-        $quotes=Turno::select('id', 'fecha', 'hora')->whereIn('id_linea',$quote_lines)
+        if($plant_name!='sanmartin'){
+            $quotes=Turno::select('id', 'fecha', 'hora')->whereIn('id_linea',$quote_lines)
             ->where($available_conditions)
             ->orWhere($expired_conditions)
             ->whereIn('id_linea',$quote_lines)
@@ -356,6 +217,21 @@ class ApiturnoController extends Controller
             ->distinct()
             ->orderBy('fecha')
             ->get(['fecha']);
+        }else{
+            $quotes=Turno::select('id', 'fecha', 'hora')->whereIn('id_linea',$quote_lines)
+            ->where($available_conditions)
+            ->whereIn('id_linea',$quote_lines)
+            ->orderBy('fecha')
+            ->orderBy('hora')
+            ->get();
+        $days=Turno::whereIn('id_linea',$quote_lines)
+            ->where($available_conditions)
+            ->whereIn('id_linea',$quote_lines)
+            ->distinct()
+            ->orderBy('fecha')
+            ->get(['fecha']);
+        }
+        
         $days_array=array();
         foreach($days as $day){
             array_push($days_array,$day->fecha.'T00:00:00');
@@ -370,227 +246,6 @@ class ApiturnoController extends Controller
         return response()->json($success_response,200);
     }
 
-    public function solicitarTurno(Request $request) {
-        if($request->header('Content-Type')!="application/json"){
-            $respuesta=[
-                'status' => 'failed',
-                'mensaje' => "Debe enviar datos en formato json"
-            ];
-                    
-            return $respuesta;
-        }
-        $validator = Validator::make($request->all(), [
-            'origen' => 'required|string|max:1',
-            'email' => 'required|email:rfc,dns',
-            'id_turno' => 'required|integer',
-            'tipo_vehiculo' => 'required|string|max:50',
-            'nro_turno_rto' => 'required|integer'
-        ]);
-        if ($validator->fails()) {
-            $respuesta=[
-                'status' => 'failed',
-                'mensaje' => "Datos inválidos"
-            ];       
-            return response()->json($respuesta,400);
-        }
-        $nro_turno_rto=$request->input("nro_turno_rto");
-        $email_solicitud=$request->input("email");
-        $id_turno=$request->input("id_turno");
-        $origen=$request->input("origen");
-        $tipo_vehiculo=$request->input("tipo_vehiculo");
-        $nuevoToken=$this->getRtoToken();
-        if($nuevoToken["status"]=='failed'){
-            $respuestaError=[
-                'status' => 'failed',
-                'mensaje' => $nuevoToken["message"]
-            ];
-            return response()->json($respuestaError,400);
-        }
-        $data=[
-            'turno' => $nro_turno_rto
-        ];
-        try{
-            $request_url=$this->getRtoUrl().$this->rto_quote_url;
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,$data);
-        }catch(\Exception $e){    
-            $respuestaError=[
-                'status' => 'failed',
-                'mensaje' => 'RTO no responde al consultar turno'
-            ];
-            return response()->json($respuestaError,400);
-        }
-        if( $response->getStatusCode()!=200){
-            $respuestaError=[
-                'status' => 'failed',
-                'mensaje' => 'Fallo la consulta al RTO',
-                'token' => $nuevoToken,
-                'turno' => $nro_turno_rto
-            ];
-            return response()->json($respuestaError,400);
-        }else{
-            if($response["status"]!='success'){     
-                $respuestaError=[
-                    'status' => 'failed',
-                    'mensaje' => 'Consulta con status no exitoso'
-                ];
-                return response()->json($respuestaError,400);
-            }
-        }
-        $datos_turno=$response["turno"];
-        if($datos_turno["email"]!=$email_solicitud){
-            $respuestaError=[
-                'status' => 'failed',
-                'mensaje' => 'Email invalido'
-            ];
-            return response()->json($respuestaError,400);
-        }
-        // valido que el turno este pendiente
-        if($datos_turno["estado"]!="PENDIENTE"){
-            $respuestaError=[
-                'status' => 'failed',
-                'mensaje' => 'Su turno no se encuentra activo.'
-            ];
-            return response()->json($respuestaError,400);
-        }
-        // valido que el dominio no tenga otro turno pendiente
-        $datosturnos=Datosturno::where('dominio',$datos_turno["patente"])->get();
-
-        $turno=Turno::where('id',$id_turno)->first();
-        if(!$turno){
-            $respuestaError=[
-                'status' => 'failed',
-                'mensaje' => 'El turno no existe'
-            ];
-            return response()->json($respuestaError,400);
-        }
-        $fecha_actual=new DateTime();
-        if(!($turno->estado=="D" || ($turno->estado=="R" && $turno->vencimiento<$fecha_actual))){
-            $respuestaError=[
-                        'status' => 'failed',
-                        'mensaje' => "El turno ya no se encuentra disponible. Refresque la pagina."
-                    ];
-            return response()->json($respuestaError,400);
-        }
-        $fecha=getDate();
-        if(strlen($fecha["mon"])==1)
-            $mes='0'.$fecha["mon"];
-        else 
-            $mes=$fecha["mon"];
-        $dia_actual=$fecha["year"]."-".$mes."-".$fecha["mday"];
-        $vehiculo=Precio::where('descripcion',$tipo_vehiculo)->first();
-        $precio_float=$vehiculo->precio.'.00';
-        $fecha_vencimiento=$fecha_actual->modify('+12 hours');
-        $url_request=$this->getYacareUrl().$this->yacare_payments_url;
-        $token_request=$this->getYacareToken();
-        $nombre_completo=$datos_turno["nombre"].' '.$datos_turno["apellido"];
-        $referencia=$id_turno.$fecha_actual->format('dmYHis');
-        $datos_post=[
-            "buyer" => [
-                "email" => $email_solicitud,
-                "name" => $nombre_completo,
-                "surname" => ""
-            ],
-            "expirationTime" => 600,
-            "items" => [
-                [
-                "name" => "Turno RTVO Centro Express",
-                "quantity" => "1",
-                "unitPrice" => $precio_float
-                ]
-            ],
-            "notificationURL" => $this->getYacareNotifUrl(),
-            "redirectURL" => $this->getYacareRedirectUrl(),
-            "reference" => $referencia
-        ];
-        $headers_yacare=[
-            'Authorization' => $token_request
-        ];
-        try{
-            $response = Http::withHeaders($headers_yacare)->post($url_request,$datos_post);
-        }catch(\Exception $e){
-            $this->log('YACARE', 'Falló la solicitud de pago', 'NA', $turno->id, $nro_turno_rto);
-        }
-        if( $response->getStatusCode()!=200){
-            $respuestaError=[
-                'status' => 'failed',
-                'mensaje' => 'Fallo la solicitud de pago'
-            ];
-            return response()->json($respuestaError,400);  
-        }
-        $id_cobro=$response["paymentOrderUUID"];
-        // $id_cobro="";
-        // ACTUALIZO EL ESTADO DEL TURNO A RESERVADO
-        $data_reserva=[
-            'estado' => "R",
-            'vencimiento' => $fecha_vencimiento,
-            'id_cobro_yac' => 'Y-'.$id_cobro
-        ];
-        $res_reservar=Turno::where('id',$turno->id)->update($data_reserva);
-        if(!$res_reservar){
-            $respuestaError=[
-                'status' => 'failed',
-                'mensaje' => 'Fallo al realizar la reserva'
-            ];
-            return response()->json($respuestaError,400);
-        }
-        $aux_carga_datos_turno=[
-            'nombre' => $nombre_completo,
-            'dominio' => $datos_turno["patente"],
-            'email' => $email_solicitud,
-            'tipo_vehiculo' => $datos_turno["tipo_de_vehiculo"],
-            'marca' => $datos_turno["marca"] || "SIN ESPECIFICAR",
-            'modelo' => $datos_turno["modelo"] || "SIN ESPECIFICAR",
-            'anio' => $datos_turno["anio"] || 2000,
-            'combustible' => $datos_turno["combustible"],
-            'inscr_mendoza' => $datos_turno["inscripto_en_mendoza"],
-            'id_turno' => $turno->id,
-            'nro_turno_rto' => $nro_turno_rto
-        ];
-        if($turno->estado=="D"){
-            $res_guardar_datos=Datosturno::insert($aux_carga_datos_turno);
-            if(!$res_guardar_datos){
-                $this->log("CRITICO", "Fallo el alta de los datos del turno", "REVISAR", $turno->id, $nro_turno_rto, "solicitarTurno");
-            }
-        }else{
-            // voy a tener que hacer update del registro
-            $res_actualizar_datos=Datosturno::where('id_turno',$turno->id)->update($aux_carga_datos_turno);
-            if(!$res_actualizar_datos){
-                $this->log("CRITICO", "Fallo el update de los datos del turno", "REVISAR", $turno->id, $nro_turno_rto, "solicitarTurno");
-            }
-        }
-        // alta en tabla datos_turno
-        $datos_mail=new TurnoRto;
-        $datos_mail->id=$turno->id;
-        $datos_mail->fecha=$turno->fecha;
-        $datos_mail->hora=$turno->hora;
-        $datos_mail->url_pago=$response["paymentURL"];
-        $datos_mail->dominio=$datos_turno["patente"];
-        $datos_mail->nombre=$nombre_completo;
-        try{
-            Mail::to($email_solicitud)->send(new TurnoRtoM($datos_mail));
-        }catch(\Exception $e){
-            $this->log("CRITICO", "Fallo al enviar datos del turno al cliente", "MAIL", $turno->id, $nro_turno_rto, "solicitarTurno");
-        }
-        $nuevoToken=$this->getRtoToken();
-        if($nuevoToken["status"]=='failed'){
-            $this->log("CRITICO", "Fallo al obtener token previo a confirmar el turno", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
-        }
-        try{
-            $request_url=$this->getRtoUrl().$this->rto_quote_confirm_url;
-            $response_rto = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($request_url,array('turno' => $nro_turno_rto));
-            if( $response_rto->getStatusCode()!=200){
-                $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
-            }
-        }catch(\Exception $e){
-            $this->log("CRITICO", "Fallo al confirmar turno al RTO", "CONFIRM", $turno->id, $nro_turno_rto, "solicitarTurno");
-        }
-        $respuesta=[
-                'status' => 'OK',
-                'url_pago' => $response["paymentURL"]
-            ];
-        return response()->json($respuesta,200);
-    }
-
     public function confirmQuote(Request $request) {
         if($request->header('Content-Type')!="application/json"){
             $error_response=[
@@ -598,6 +253,8 @@ class ApiturnoController extends Controller
             ];      
             return response()->json($error_response,400);
         }
+
+        
         $validator = Validator::make($request->all(), [
             'origen' => 'required|string|max:1',
             'email' => 'required|string|max:150',
@@ -617,6 +274,8 @@ class ApiturnoController extends Controller
             ];      
             return response()->json($error_response,400);
         }
+
+        
         $rto_quote_number=0;
         $request_email=$request->input("email");
         $request_name=$request->input("nombre");
@@ -630,6 +289,8 @@ class ApiturnoController extends Controller
         $payment_platform=$request->input("plataforma_pago");
         $plant_name=$this->getPlantName();
         $formatted_plant_name=$this->getFormattedPlantName($plant_name);
+
+        
 
         $currentDate=new DateTime();
         // valido que el dominio no tenga otro turno pendiente
@@ -650,6 +311,8 @@ class ApiturnoController extends Controller
                 }
             }
         }
+
+        
         $quote=Turno::where('id',$quote_id)->first();
         if(!$quote){
             $error_response=[
@@ -663,126 +326,142 @@ class ApiturnoController extends Controller
             ];
             return response()->json($error_response,404);
         }
-        $date=getDate();
-        if(strlen($date["mon"])==1) $month='0'.$date["mon"]; else $month=$date["mon"];
-        $currentDay=$date["year"]."-".$month."-".$date["mday"];
-        $vehicle=Precio::where('descripcion',$vehicle_type)->first();
-        $float_price=$vehicle->precio.'.00';
-        $expiration_minutes=$this->getPaymentExpirationMinutes();
-        $expiration_date=clone $currentDate;
-        $expiration_date->modify('+'.$expiration_minutes.' minutes');
-        $reference=$quote_id.$currentDate->format('dmYHis').$request_domain;
-        if($payment_platform=='yacare'){
-            $request_url=$this->getYacareUrl().$this->yacare_payments_url;
-            $headers_yacare=[
-                'Authorization' => $this->getYacareToken()
-            ];
-            $complete_name=$request_name;
-            $datos_post=[
-                "buyer" => [
-                    "email" => $request_email,
-                    "name" => $complete_name,
-                    "surname" => ""
-                ],
-                "expirationTime" => $expiration_minutes,
-                "items" => [
-                    [
-                    "name" => "Turno RTO ".$formatted_plant_name,
-                    "quantity" => "1",
-                    "unitPrice" => $float_price
-                    ]
-                ],
-                "notificationURL" => $this->getYacareNotifUrl(),
-                "redirectURL" => $this->getYacareRedirectUrl(),
-                "reference" => $reference
-            ];
-            try{
-                $res_yacare = Http::withHeaders($headers_yacare)->post($request_url,$datos_post);
-            }catch(\Exception $e){
-                $this->log("YACARE", "Fallo la solicitud de pago", "NA", $turno->id, $rto_quote_number, "solicitarTurno");
-            }
-            if($res_yacare->getStatusCode()!=200){
-                $error_response=[
-                    'reason' => 'YACARE_ERROR'
+
+        
+
+        
+        if($plant_name!='sanmartin'){
+            $date=getDate();
+            if(strlen($date["mon"])==1) $month='0'.$date["mon"]; else $month=$date["mon"];
+            $currentDay=$date["year"]."-".$month."-".$date["mday"];
+            $vehicle=Precio::where('descripcion',$vehicle_type)->first();
+            $float_price=$vehicle->precio.'.00';
+            $expiration_minutes=$this->getPaymentExpirationMinutes();
+            $expiration_date=clone $currentDate;
+            $expiration_date->modify('+'.$expiration_minutes.' minutes');
+            $reference=$quote_id.$currentDate->format('dmYHis').$request_domain;
+            if($payment_platform=='yacare'){
+                $request_url=$this->getYacareUrl().$this->yacare_payments_url;
+                $headers_yacare=[
+                    'Authorization' => $this->getYacareToken()
                 ];
-                return response()->json($error_response,404);
-            }
-            $payment_id='Y-'.$res_yacare["paymentOrderUUID"];
-            $payment_url=$res_yacare["paymentURL"];
-        }else{
-            $mp_aux_expiration_date=clone $currentDate;
-            $mp_aux_expiration_date->modify('+ '.$this->getPaymentCashExpirationMinutes().' minutes');
-            $mp_aux_cash_expiration_date=clone $currentDate;
-            $mp_aux_cash_expiration_date->modify('+ '.$this->getPaymentCashExpirationMinutes().' minutes');
-            $mp_expiration_day=$mp_aux_expiration_date->format('Y-m-d');
-            $mp_expiration_time=$mp_aux_expiration_date->format('H:i:s');
-            $mp_expiration_date=$mp_expiration_day.'T'.$mp_expiration_time.'.000-03:00';
-            $mp_cash_expiration_day=$mp_aux_cash_expiration_date->format('Y-m-d');
-            $mp_cash_expiration_time=$mp_aux_cash_expiration_date->format('H:i:s');
-            $mp_cash_expiration_date=$mp_cash_expiration_day.'T'.$mp_cash_expiration_time.'.000-03:00';
-            $request_url=$this->getMPUrl().$this->mp_preferences_url;
-            $headers_mercadopago=[
-                'Authorization' => "Bearer ".$this->getMPToken()
-            ];
-            $excluded_payment_methods=[];
-            if($plant_name=='lasheras' || $plant_name=='maipu'){
-                
-                $cash_methods_limit_minutes=$this->getPaymentCashExpirationMinutes()+$this->getMarginPostExpirationMinutes();
-                
-                $mp_cash_methods_limit_time=clone $expiration_date;
-                $mp_cash_methods_limit_time->modify('+'.$cash_methods_limit_minutes.' minutes');
-                $mp_cash_methods_limit_time_formatted=$mp_cash_methods_limit_time->format('Y-m-dH:i:s');
-                $quote_date=$quote->fecha.$quote->hora;
-                $allow_cash_methods=$mp_cash_methods_limit_time_formatted<$quote_date;
-                
-                if($allow_cash_methods) {
-                    $excluded_payment_methods=$this->getCashExcludedPaymentMethods();
+                $complete_name=$request_name;
+                $datos_post=[
+                    "buyer" => [
+                        "email" => $request_email,
+                        "name" => $complete_name,
+                        "surname" => ""
+                    ],
+                    "expirationTime" => $expiration_minutes,
+                    "items" => [
+                        [
+                        "name" => "Turno RTO ".$formatted_plant_name,
+                        "quantity" => "1",
+                        "unitPrice" => $float_price
+                        ]
+                    ],
+                    "notificationURL" => $this->getYacareNotifUrl(),
+                    "redirectURL" => $this->getYacareRedirectUrl(),
+                    "reference" => $reference
+                ];
+                try{
+                    $res_yacare = Http::withHeaders($headers_yacare)->post($request_url,$datos_post);
+                }catch(\Exception $e){
+                    $this->log("YACARE", "Fallo la solicitud de pago", "NA", $turno->id, $rto_quote_number, "solicitarTurno");
+                }
+                if($res_yacare->getStatusCode()!=200){
+                    $error_response=[
+                        'reason' => 'YACARE_ERROR'
+                    ];
+                    return response()->json($error_response,404);
+                }
+                $payment_id='Y-'.$res_yacare["paymentOrderUUID"];
+                $payment_url=$res_yacare["paymentURL"];
+            }else{
+                $mp_aux_expiration_date=clone $currentDate;
+                $mp_aux_expiration_date->modify('+ '.$this->getPaymentCashExpirationMinutes().' minutes');
+                $mp_aux_cash_expiration_date=clone $currentDate;
+                $mp_aux_cash_expiration_date->modify('+ '.$this->getPaymentCashExpirationMinutes().' minutes');
+                $mp_expiration_day=$mp_aux_expiration_date->format('Y-m-d');
+                $mp_expiration_time=$mp_aux_expiration_date->format('H:i:s');
+                $mp_expiration_date=$mp_expiration_day.'T'.$mp_expiration_time.'.000-03:00';
+                $mp_cash_expiration_day=$mp_aux_cash_expiration_date->format('Y-m-d');
+                $mp_cash_expiration_time=$mp_aux_cash_expiration_date->format('H:i:s');
+                $mp_cash_expiration_date=$mp_cash_expiration_day.'T'.$mp_cash_expiration_time.'.000-03:00';
+                $request_url=$this->getMPUrl().$this->mp_preferences_url;
+                $headers_mercadopago=[
+                    'Authorization' => "Bearer ".$this->getMPToken()
+                ];
+                $excluded_payment_methods=[];
+                if($plant_name=='lasheras' || $plant_name=='maipu'){
+                    
+                    $cash_methods_limit_minutes=$this->getPaymentCashExpirationMinutes()+$this->getMarginPostExpirationMinutes();
+                    
+                    $mp_cash_methods_limit_time=clone $expiration_date;
+                    $mp_cash_methods_limit_time->modify('+'.$cash_methods_limit_minutes.' minutes');
+                    $mp_cash_methods_limit_time_formatted=$mp_cash_methods_limit_time->format('Y-m-dH:i:s');
+                    $quote_date=$quote->fecha.$quote->hora;
+                    $allow_cash_methods=$mp_cash_methods_limit_time_formatted<$quote_date;
+                    
+                    if($allow_cash_methods) {
+                        $excluded_payment_methods=$this->getCashExcludedPaymentMethods();
+                    }else{
+                        $excluded_payment_methods=$this->getExcludedPaymentMethods();
+                    }
                 }else{
                     $excluded_payment_methods=$this->getExcludedPaymentMethods();
                 }
-            }else{
-                $excluded_payment_methods=$this->getExcludedPaymentMethods();
-            }
-            $datos_post=[
-                "external_reference" => $reference,
-                "notification_url" => $this->getMPNotifUrl(),
-                "payer" => [
-                    "name" => $request_name,
-                    "email" => $request_email
-                ],
-                "items" => [
-                    [
-                        "title" => "RTO: ".$reference,
-                        "quantity" => 1,
-                        "unit_price" => $vehicle->precio,
-                        "currency_id" => "ARS"
-                    ]
-                ],
-                "payment_methods" => $excluded_payment_methods,
-                "expires" => true,
-                "expiration_date_to"=> $mp_expiration_date,
-                "date_of_expiration" => $mp_cash_expiration_date,
-            ];
-            try{
-                $res_mp = Http::withHeaders($headers_mercadopago)->post($request_url,$datos_post);
-            }catch(\Exception $e){
-                $this->log("MERCADO PAGO", "Fallo la solicitud de pago", "na", $quote->id, $rto_quote_number, "solicitarTurno");
-            }
-            if($res_mp->getStatusCode()!=201){
-                $error_response=[
-                    'reason' => 'MELI_ERROR'
+                $datos_post=[
+                    "external_reference" => $reference,
+                    "notification_url" => $this->getMPNotifUrl(),
+                    "payer" => [
+                        "name" => $request_name,
+                        "email" => $request_email
+                    ],
+                    "items" => [
+                        [
+                            "title" => "RTO: ".$reference,
+                            "quantity" => 1,
+                            "unit_price" => $vehicle->precio,
+                            "currency_id" => "ARS"
+                        ]
+                    ],
+                    "payment_methods" => $excluded_payment_methods,
+                    "expires" => true,
+                    "expiration_date_to"=> $mp_expiration_date,
+                    "date_of_expiration" => $mp_cash_expiration_date,
                 ];
-                return response()->json($error_response,404);
+                try{
+                    $res_mp = Http::withHeaders($headers_mercadopago)->post($request_url,$datos_post);
+                }catch(\Exception $e){
+                    $this->log("MERCADO PAGO", "Fallo la solicitud de pago", "na", $quote->id, $rto_quote_number, "solicitarTurno");
+                }
+                if($res_mp->getStatusCode()!=201){
+                    $error_response=[
+                        'reason' => 'MELI_ERROR'
+                    ];
+                    return response()->json($error_response,404);
+                }
+                $payment_id=$reference;
+                $payment_url=$res_mp["init_point"];
             }
-            $payment_id=$reference;
-            $payment_url=$res_mp["init_point"];
+            $reservation_data=[
+                'estado' => "R",
+                'vencimiento' => $expiration_date,
+                'id_cobro_yac' => $payment_id
+            ];
+        }else{
+            $reservation_data=[
+                'estado' => "C"
+            ];
+            $payment_url='';
+            $xpiration_minutes=0;
         }
+        
         // ACTUALIZO EL ESTADO DEL TURNO A RESERVADO
-        $reservation_data=[
-            'estado' => "R",
-            'vencimiento' => $expiration_date,
-            'id_cobro_yac' => $payment_id
-        ];
+
+        
+        
         $res_reserve=Turno::where('id',$quote->id)->update($reservation_data);
         if(!$res_reserve){
             $error_response=[
@@ -790,6 +469,8 @@ class ApiturnoController extends Controller
             ];
             return response()->json($error_response,404);
         }
+
+        
         $quote_data_aux_loader=[
             'nombre' => $request_name,
             'dominio' => $request_domain,
@@ -804,6 +485,7 @@ class ApiturnoController extends Controller
             'nro_turno_rto' => $rto_quote_number,
             'telefono' => $request_phone
         ];
+        
         if($quote->estado=="D"){
             
             $res_save_quote_data=Datosturno::insert($quote_data_aux_loader);
@@ -823,6 +505,7 @@ class ApiturnoController extends Controller
             }
         }
 
+        
         // alta en tabla datos_turno
         $mail_data=new TurnoRto;
         $mail_data->id=$quote->id;
@@ -832,6 +515,8 @@ class ApiturnoController extends Controller
         $mail_data->dominio=$request_domain;
         $mail_data->nombre=$request_name;
         $mail_data->plant_name=$formatted_plant_name;
+        $mail_data->no_payment=$this->getNoPayment();
+        $mail_data->time_to_pay=$this->minutesToHours($expiration_minutes);
 
         try{
             Mail::to($request_email)->send(new TurnoRtoM($mail_data));
@@ -843,5 +528,476 @@ class ApiturnoController extends Controller
                 'url_pago' => $payment_url
             ];
         return response()->json($success_response,200);
+    }
+
+    public function getAvailableQuotesForReschedule(Request $request){
+
+
+        if($request->header('Content-Type')!="application/json"){
+            $respuesta=[
+                'reason' => 'INVALID_FORMAT'
+            ];
+                    
+            return response()->json($respuesta,400);
+        }
+
+        // valido que el dato numero de turno sea un entero y se encuentre presente
+        $validator = Validator::make($request->all(), [
+            'id_turno' => 'required|integer'
+        ]);
+
+        if ($validator->fails()) {
+            
+            $respuesta=[
+                'reason' => 'INVALID_DATA'
+            ];
+                    
+            return response()->json($respuesta,400);
+        }
+
+        $id_turno=$request->input('id_turno');
+
+        $datos_turno=Datosturno::where('id_turno',$id_turno)->first();
+
+        $fecha_tope_reschedule=new DateTime();
+        $fecha_tope_reschedule->modify('-3 hours');
+
+        if(!$datos_turno){
+            $respuestaError=[
+                'reason' => 'INEXISTENT QUOTE'
+            ];
+            
+            return response()->json($respuestaError,404);
+        }
+
+        $turno=Turno::find($id_turno);
+
+        if(!$turno){
+            $respuestaError=[
+                'reason' => 'INEXISTENT QUOTE'
+            ];
+            
+            return response()->json($respuestaError,404);
+        }else{
+            if($turno->estado!='C'){
+
+                $respuestaError=[
+                    'reason' => 'NOT CONFIRMED QUOTE'
+                ];
+                return response()->json($respuestaError,404);
+
+            }else{
+                // que no sea viejo
+                if($turno->fecha<=$fecha_tope_reschedule->format('Y-m-d')){
+                    $respuestaError=[
+                        'reason' => 'OLD QUOTE'
+                    ];
+                    return response()->json($respuestaError,404);
+                }
+            }
+        }
+
+        $vehiculo=Precio::where('descripcion',$datos_turno->tipo_vehiculo)->first();
+
+        // $dia_actual=date("Y-m-d");
+        $dia_actual=new DateTime();
+        $primer_dia_turnos=$dia_actual->modify('+2 days');
+
+        $conditions=[
+            "tipo_vehiculo" => $vehiculo->tipo_vehiculo
+        ];
+
+        $lineas = Linea::where($conditions)->get();
+
+        $lineas_turnos=array();
+        foreach($lineas as $linea){
+            array_push($lineas_turnos,$linea->id);
+        }
+
+        $conditions=[
+            ['estado','=','D'],
+            ['origen','=','T'],
+            ['fecha','>=',$primer_dia_turnos]
+        ];
+        
+        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->orderBy('hora')->get();
+
+        $dias=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->whereIn('id_linea',$lineas_turnos)->distinct()->orderBy('fecha')->get(['fecha']);
+
+        $array_dias=array();
+        foreach($dias as $dia){
+            array_push($array_dias,$dia->fecha.'T00:00:00');
+        }
+
+        $respuestaOK=[
+            'status' => 'success',
+            'tipo_vehiculo' => $datos_turno->tipo_vehiculo,
+            'precio' => $vehiculo->precio,
+            'dias' => $array_dias,
+            'turnos' => $turnos,
+            'fecha' => $turno->fecha.'T00:00:00',
+            'hora' => $turno->hora
+        ];
+        
+        return response()->json($respuestaOK,200);
+
+    }
+
+    public function changeQuoteDate(Request $request){
+
+        if($request->header('Content-Type')!="application/json"){   
+            $respuesta=[
+                'reason' => 'INVALID_FORMAT'
+            ];
+                    
+            return response()->json($respuesta,400);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'id_turno_ant' => 'required|integer',
+            'id_turno_nuevo' => 'required|integer',
+            'email' => 'required|string|max:150',
+        ]);
+
+        if ($validator->fails()) {
+            
+            $respuesta=[
+                'reason' => 'INVALID_DATA'
+            ];
+                    
+            return response()->json($respuesta,400);
+        }
+
+        $email=$request->input("email");
+        $id_turno_ant=$request->input("id_turno_ant");
+        $id_turno_nuevo=$request->input("id_turno_nuevo");
+
+        $turno_anterior=Turno::find($id_turno_ant);
+        $turno_nuevo=Turno::find($id_turno_nuevo);
+
+        if($turno_anterior->estado!="P" && $turno_anterior->estado!="C"){
+
+            $respuesta=[
+                'reason' => 'INVALID_STATUS'
+            ];
+                    
+            return response()->json($respuesta,404);
+
+        }
+
+        if($turno_anterior->datos->email!=$email){
+
+            $respuesta=[
+                'reason' => "INVALID_EMAIL"
+            ];
+                    
+            return response()->json($respuesta,404);
+
+        }
+
+        if(!($turno_nuevo->estado=="D")){
+	        
+            $respuesta=[
+                'reason' => 'INVALID_STATUS'
+            ];
+                    
+            return response()->json($respuesta,404);
+
+        }
+
+        $datos_futuro_turno=[
+            'estado' => $turno_anterior->estado,
+            'id_cobro_yac' => $turno_anterior->id_cobro_yac
+        ];
+
+        $actualizar_turno_nuevo=Turno::where('id',$turno_nuevo->id)->update($datos_futuro_turno);
+            
+        if(!$actualizar_turno_nuevo){
+                
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al actualizar el nuevo turno",
+                "fix" => "REVISAR",
+                "id_turno" => $turno_anterior->id,
+                "nro_turno_rto" => "",
+                "servicio" => "notification"
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+        $actualizar_id_datos=Datosturno::where('id_turno',$turno_anterior->id)->update(array('id_turno' => $turno_nuevo->id));
+            
+        if(!$actualizar_id_datos){
+                
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al actualizar el id de turno en Datos turno",
+                "fix" => "REVISAR",
+                "id_turno" => $turno_anterior->id,
+                "nro_turno_rto" => "",
+                "servicio" => "notification"
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+        $actualizar_id_cobros=Cobro::where('id_turno',$turno_anterior->id)->update(array('id_turno' => $turno_nuevo->id));
+            
+        if(!$actualizar_id_cobros){
+                
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al actualizar el id en la tabla Cobros",
+                "fix" => "REVISAR",
+                "id_turno" => $turno_anterior->id,
+                "nro_turno_rto" => "",
+                "servicio" => "notification"
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+        $datos_viejo_turno=[
+            'estado' => "D",
+            'id_cobro_yac' => ""
+        ];
+
+        $actualizar_viejo_nuevo=Turno::where('id',$turno_anterior->id)->update($datos_viejo_turno);
+            
+        if(!$actualizar_viejo_nuevo){
+                
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al actualizar el nuevo turno",
+                "fix" => "REVISAR",
+                "id_turno" => $turno_anterior->id,
+                "nro_turno_rto" => "",
+                "servicio" => "notification"
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+        // vuelvo a obtener nuevo turno por sus datos nuevos de la tabla de datos
+        $turno_nuevo=Turno::find($id_turno_nuevo);
+
+        //enviar correo
+
+        $datos_mail=new TurnoRto;
+        $datos_mail->id=$turno_nuevo->id;
+        $dia=substr($turno_nuevo->fecha,8,2);
+        $mes=substr($turno_nuevo->fecha,5,2);
+        $anio=substr($turno_nuevo->fecha,0,4);
+        $datos_mail->fecha=$dia.'/'.$mes.'/'.$anio;
+        $datos_mail->hora=substr($turno_nuevo->hora,0,5).' HS.';
+        $datos_mail->url_pago="";
+        $datos_mail->dominio=$turno_nuevo->datos->dominio;
+        $datos_mail->nombre=$turno_nuevo->datos->nombre;
+        $datos_mail->url_reprog=$this->getFrontData()['base_url'].$this->repro_url_suffix.$turno_nuevo->id;
+        $datos_mail->url_cancel=$this->getFrontData()['base_url'].$this->cancel_url_suffix.$turno_nuevo->id;
+
+
+        try{
+            
+            Mail::to($email)->send(new ReprogRtoQuote($datos_mail));
+
+        }catch(\Exception $e){
+            
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al enviar datos del turno al cliente",
+                "fix" => "MAIL",
+                "id_turno" => $turno_nuevo->id,
+                "nro_turno_rto" => $turno_nuevo->datos->nro_turno_rto,
+                "servicio" => "enviarCorreo"
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+        $respuesta=[
+            'status' => 'success'
+        ];
+
+        return response()->json($respuesta,200);
+
+    }
+    
+    public function cancelQuote(Request $request){
+
+
+        if($request->header('Content-Type')!="application/json"){   
+            $respuesta=[
+                'reason' => 'INVALID_FORMAT'
+            ];
+                    
+            return response()->json($respuesta,400);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'id_turno' => 'required|integer',
+            'email' => 'required|string|max:150',
+        ]);
+
+        if ($validator->fails()) {
+            
+            $respuesta=[
+                'reason' => 'INVALID_DATA'
+            ];
+                    
+            return response()->json($respuesta,400);
+        }
+
+        $email=$request->input("email");
+        $id_turno=$request->input("id_turno");
+
+        $turno=Turno::find($id_turno);
+
+        if($turno->estado!="C"){
+
+            $respuesta=[
+                'reason' => 'INVALID_STATUS'
+            ];
+                    
+            return response()->json($respuesta,404);
+
+        }
+
+        if($turno->datos->email!=$email){
+
+            $respuesta=[
+                'reason' => "INVALID_EMAIL"
+            ];
+                    
+            return response()->json($respuesta,404);
+
+        }
+
+        //borrar registro en datos_turno
+
+        $borrar_datos_tabla=Datosturno::where('id_turno',$turno->id)->delete();
+
+        //liberar turno en tabla turnos
+
+        $update_fields=[
+            'estado'=>'D',
+            'updated_at' => NULL
+        ];
+
+        $res_liberar_turno=Turno::where('id',$turno->id)->update($update_fields);
+            
+        if(!$res_liberar_turno){
+                
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al liberar el turno",
+                "fix" => "REVISAR",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => "NA",
+                "servicio" => "cancelar turno"
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+        //enviar cancelacion a rto
+
+        $nuevoToken=$this->obtenerToken();
+
+        if($nuevoToken["status"]=='failed'){
+
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al obtener token previo a confirmar el turno",
+                "fix" => "CONFIRM",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => "",
+                "servicio" => "notification"
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+        try{
+            $url=$this->getRtoData()['base_url'].'/api/v1/auth/rechazar/turno';
+            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($url,array('turno' => $turno->datos->nro_turno_rto));
+
+            if( $response->getStatusCode()!=200){
+
+                $error=[
+                    "tipo" => "CRITICO",
+                    "descripcion" => "Fallo al cancelar turno al RTO",
+                    "fix" => "CONFIRM",
+                    "id_turno" => $turno->id,
+                    "nro_turno_rto" => $nro_turno_rto,
+                    "servicio" => "notification"
+                ];
+
+                Logerror::insert($error);
+                        
+            }
+
+        }catch(\Exception $e){
+
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al cancelar turno al RTO",
+                "fix" => "CONFIRM",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => $nro_turno_rto,
+                "servicio" => "notification"
+            ];
+
+            Logerror::insert($error);
+                        
+
+        }
+
+        //enviar correo
+
+        $datos_mail=new CancelTurnoRto;
+        $datos_mail->id=$turno->id;
+        $dia=substr($turno->fecha,8,2);
+        $mes=substr($turno->fecha,5,2);
+        $anio=substr($turno->fecha,0,4);
+        $datos_mail->fecha=$dia.'/'.$mes.'/'.$anio;
+        $datos_mail->hora=substr($turno->hora,0,5).' HS.';
+        $datos_mail->dominio=$turno->datos->patente;
+        $datos_mail->nombre=$turno->datos->nombre;
+
+
+        try{
+            
+            Mail::to($email)->send(new CancelRtoQuote($datos_mail));
+
+        }catch(\Exception $e){
+            
+            $error=[
+                "tipo" => "CRITICO",
+                "descripcion" => "Fallo al enviar datos del turno al cliente",
+                "fix" => "MAIL",
+                "id_turno" => $turno->id,
+                "nro_turno_rto" => $turno->datos->nro_turno_rto,
+                "servicio" => "enviarCorreo"
+            ];
+
+            Logerror::insert($error);
+
+        }
+
+        $respuesta=[
+            'status' => 'success'
+        ];
+
+        return response()->json($respuesta,200);
+
     }
 }

@@ -2,6 +2,8 @@
 
 return [
 
+    'no_payment' => env('NO_PAYMENT', false),
+
     'plant_name' => env('PLANT_NAME', ''),
     /*
     |--------------------------------------------------------------------------

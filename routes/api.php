@@ -29,14 +29,15 @@ Route::group([
     'prefix' => 'auth'
 ], function () {
     Route::post('login', [AuthController::class, 'login']);
-    // Route::post('signup', [AuthController::class, 'signUp']);
-    Route::post('solTur', [ApiturnoController::class, 'solicitarTurno']);
+    Route::post('signup', [AuthController::class, 'signUp']);
     Route::post('confQuote', [ApiturnoController::class, 'confirmQuote']);
-    Route::post('valTur', [ApiturnoController::class, 'validateQuote']);
     Route::post('getQuotes', [ApiturnoController::class, 'getAvailableQuotes']);
     Route::post('notif', [PagosController::class, 'notification']);
     Route::post('notifMeli', [PagosController::class, 'notificationMeli']);
     // Route::post('regAte', [AdminController::class, 'registrarAtencion']);
+    Route::post('getQuotesForResc', [ApiturnoController::class, 'getAvailableQuotesForReschedule']);
+    Route::post('changeDate', [ApiturnoController::class, 'changeQuoteDate']);
+    Route::post('cancelQuote', [ApiturnoController::class, 'cancelQuote']);
     
 
     
