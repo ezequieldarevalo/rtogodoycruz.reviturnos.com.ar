@@ -455,7 +455,7 @@ class ApiturnoController extends Controller
                 'estado' => "C"
             ];
             $payment_url='';
-            $xpiration_minutes=0;
+            $expiration_minutes=0;
         }
         
         // ACTUALIZO EL ESTADO DEL TURNO A RESERVADO
