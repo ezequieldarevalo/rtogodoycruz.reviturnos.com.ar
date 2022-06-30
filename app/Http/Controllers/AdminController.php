@@ -295,7 +295,8 @@ class AdminController extends Controller
             'combustible' => $combustible,
             'inscr_mendoza' => "Si",
             'id_turno' => $nuevo_turno->id,
-            'nro_turno_rto' => 0
+            'nro_turno_rto' => 0,
+            'telefono' => ''
         ];
         $cargar_datos=Datosturno::insert($aux_carga_datos_turno);
         $respuesta=[
