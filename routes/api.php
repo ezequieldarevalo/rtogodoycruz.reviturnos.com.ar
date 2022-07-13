@@ -38,6 +38,7 @@ Route::group([
     Route::post('getQuotesForResc', [ApiturnoController::class, 'getAvailableQuotesForReschedule']);
     Route::post('changeDate', [ApiturnoController::class, 'changeQuoteDate']);
     Route::post('cancelQuote', [ApiturnoController::class, 'cancelQuote']);
+    Route::post('procNotif', [PagosController::class, 'processNotifications']);
     
 
     
