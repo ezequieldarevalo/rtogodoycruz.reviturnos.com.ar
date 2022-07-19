@@ -32,8 +32,9 @@ Route::group([
     Route::post('signup', [AuthController::class, 'signUp']);
     Route::post('confQuote', [ApiturnoController::class, 'confirmQuote']);
     Route::post('getQuotes', [ApiturnoController::class, 'getAvailableQuotes']);
-    Route::post('notif', [PagosController::class, 'notification']);
-    Route::post('notifMeli', [PagosController::class, 'notificationMeli']);
+    Route::post('gnotif', [PagosController::class, 'notification']);
+    Route::post('notif', [PagosController::class, 'notificationYAC']);
+    Route::post('notifMeli', [PagosController::class, 'notificationMP']);
     // Route::post('regAte', [AdminController::class, 'registrarAtencion']);
     Route::post('getQuotesForResc', [ApiturnoController::class, 'getAvailableQuotesForReschedule']);
     Route::post('changeDate', [ApiturnoController::class, 'changeQuoteDate']);

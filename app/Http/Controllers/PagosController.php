@@ -94,7 +94,7 @@ class PagosController extends Controller
 		    ];      
 		    return $respuesta;
 		}
-		$this->log("NOTIF YAC", "Obtuve id de turno desde el id de pago :".$request->input("id"), "GETSTATE", $turno->id, "", "notification");
+		$this->log("NOTIF YAC", "Obtuve id de turno desde el id de pago :".$id_cobro, "GETSTATE", $turno->id, "", "notification");
 		/////////////////////////////////////////////////////////////////////
 		// CONSULTO A YACARE LOS DATOS DEL PAGO
 		/////////////////////////////////////////////////////////////////////
@@ -314,10 +314,27 @@ class PagosController extends Controller
             }
         }
     }
+
+	public function notification(Request $request){
+        $paymentId=$request->input("paymentId");
+		$paymentProvider=$request->input("paymentProvider");
+		$this->processNotification($paymentId,$paymentProvider);
+        $respuesta=[
+            'status' => 'OK'
+        ];     
+        return response()->json($respuesta,200);
+    }
+
+	public function processNotification($id,$provider){
+		if($provider=='yacare')
+			$this->processYACNotification($id);
+		else
+			$this->processMPNotification($id);
+	}
     
     public function notificationYAC(Request $request){
         $id_cobro=$request->input("id");
-        $this->processYACNotification($id_cobro);
+        $processNotification=$this->processYACNotification($id_cobro);
         $respuesta=[
             'status' => 'OK'
         ];     
@@ -327,7 +344,7 @@ class PagosController extends Controller
 
     public function notificationMP(Request $request){
         $id_cobro=$request->input("data.id");
-        $this->processMPNotification($id_cobro);
+        $processNotification=$this->processMPNotification($id_cobro);
         $respuesta=[
             'status' => 'OK'
         ];     
@@ -342,12 +359,11 @@ class PagosController extends Controller
         $mercadoPago=[];
         foreach($ids as $id){
             if($id["paymentProvider"]=="yacare"){
-                $this->processYACNotification($id["paymentId"]);
                 array_push($yacare,$id["paymentId"]);
             }else if($id["paymentProvider"]=="mercadoPago"){
-                $this->processMPNotification($id["paymentId"]);
                 array_push($mercadoPago,$id["paymentId"]);
             }
+			$this->processNotification($id["paymentId"],$id["paymentProvider"]);
         }
         $respuesta=[
             'status' => 'OK',
