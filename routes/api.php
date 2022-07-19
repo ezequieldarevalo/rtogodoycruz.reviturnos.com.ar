@@ -40,7 +40,7 @@ Route::group([
     Route::post('changeDate', [ApiturnoController::class, 'changeQuoteDate']);
     Route::post('cancelQuote', [ApiturnoController::class, 'cancelQuote']);
     Route::post('procNotif', [PagosController::class, 'processNotifications']);
-    
+    Route::get('testFind', [ApiturnoController::class, 'testFindNotification']);
 
     
 

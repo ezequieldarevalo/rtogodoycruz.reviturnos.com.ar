@@ -5,6 +5,8 @@ return [
     'no_payment' => env('NO_PAYMENT', false),
 
     'plant_name' => env('PLANT_NAME', ''),
+
+    'notification_manager_url' => env('NOTIFICATION_MANAGER_URL','http://localhost:3001'),
     /*
     |--------------------------------------------------------------------------
     | Application Name

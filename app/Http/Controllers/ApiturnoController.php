@@ -34,6 +34,8 @@ class ApiturnoController extends Controller
 
     public $mp_preferences_url="checkout/preferences";
 
+    public $mp_search_preference_url="/v1/payments/search";
+
     public function getRtoUrl(){
         return config('rto.url');
     }
@@ -131,6 +133,10 @@ class ApiturnoController extends Controller
         return config('plant.ignore_lines');
     }
 
+    public function getNotificationManagerUrl(){
+        return config('app.notification_manager_url');
+    }
+
     public function log($type, $description, $fix, $quote_id, $rto_quote_id, $service ){
         $error=[
             "tipo" => $type,
@@ -142,6 +148,193 @@ class ApiturnoController extends Controller
         ];
         Logerror::insert($error);
     }
+
+    public function processYACNotification($id_cobro){
+		$id_cobro_yac='Y-'.$id_cobro;
+		$turno=Turno::where('id_cobro_yac',$id_cobro_yac)->first();
+		// SI LA BUSQUEDA NO DA RESULTADO, REGISTRO EL ERROR
+		///////////////////////
+		if(!$turno){
+		    $this->log("TABLA", "Fallo la consulta en la tabla turnos con el id de cobro: ".$id_cobro, "NA", 0, "", "notification");
+		    $respuesta=[
+		        'status' => 'failed',
+		        'code' => 'ID_NOT_FOUND'
+		    ];      
+		    return $respuesta;
+		}
+		$this->log("NOTIF YAC", "Obtuve id de turno desde el id de pago :".$id_cobro, "GETSTATE", $turno->id, "", "notification");
+		/////////////////////////////////////////////////////////////////////
+		// CONSULTO A YACARE LOS DATOS DEL PAGO
+		/////////////////////////////////////////////////////////////////////
+		$request_url=$this->getYacareUrl().$this->yacare_transactions_url.$id_cobro;
+		$headers_yacare=[
+		    'Authorization' => $this->getYacareToken()
+		];
+		try{
+		    $response = Http::withHeaders($headers_yacare)->get($request_url);
+		}catch(\Exception $e){
+		    $this->log("YACARE", "Fallo la consulta de estado del id: ".$id_cobro, "NA", 0, "", "notification");
+		    $respuesta=[
+		        'status' => 'failed',
+		        'code' => 'YACARE_QUERY_FAILED'
+		    ];      
+		    return $respuesta;
+		}
+		$this->log("NOTIF YAC", "Consulte estado de un pago, el resultado fue: ".$response->status(), "GETSTATE", $turno->id, "", "notification");
+		// SI YACARE DA ERROR ENTONCES LO REGISTRO
+		/////////////////////////////////////////////////////////////////////
+		
+		if( $response->status()!=200){
+		    $this->log("YACARE", "Fallo la consulta de estado del id: ".$id_cobro.". Posible pago no registrado.", "REVISAR", 0, "", "notification");
+		    $respuesta=[
+		        'status' => 'failed',
+		        'code' => 'YACARE_ID_NOT_FOUND'
+		    ];      
+		    return $respuesta;
+		}
+		// ALMACENO DATOS DEL PAGO EN LA VARIABLE CORRESPONDIENTE
+		/////////////////////////////////////////////////////////////////////
+		
+		$datos_pago=$response[0];
+		
+		$this->log("AAAAAAA", "Pruebo obtener status: ".$datos_pago["status"]["id"], "REVISAR", $turno->id, "", "notification");
+		// SI ESTA PAGA CAMBIO ESTADO DEL TURNO A PAGADO Y REGISTRO EL COBRO EN LA TABLA
+		/////////////////////////////////////////////////////////////////////
+		
+		if($datos_pago["status"]["id"]=="P"){
+		    $listado_intentos=$datos_pago["payments"];
+		    // OBTENGO ID DEL TURNO EN LA RTO PARA CONFIRMAR A RTO MENDOZA
+		    /////////////////////////////////////////////////////////////////////
+		    $datos_turno=Datosturno::where('id_turno',$turno->id)->first();
+		    if(!$datos_turno){
+		        $this->log("CRITICO", "No se encuentran datos del turno para confirmar a la RTO.", "CONFIRM", $turno->id, "", "notification");
+		    }
+		    // ACTUALIZO ESTADO DEL TURNO
+		    $res_pagar=Turno::where('id',$turno->id)->update(array('estado' => "P"));
+		    if(!$res_pagar){
+		        $this->log("CRITICO", "Fallo al actualizar el estado del turno a pagado", "REVISAR", $turno->id, $datos_turno->nro_turno_rto, "notification");
+		    }
+		    foreach($listado_intentos as $pago){
+		        // si el pago esta aprobado
+		        if($pago["status"]["id"]=="A"){
+		            // REGISTRO EL PAGO/COBRO
+		            $res_cobro=Cobro::insert(array(
+		                'fecha' => $pago["date"],
+		                'monto' => $datos_pago["amount"],
+		                'metodo' => $pago["type"],
+		                'nro_op' => $pago["transactionId"],
+		                'origen' => "Yacare",
+		                'id_turno' => $turno->id,
+		                'id_cobro' => $id_cobro
+		            ));
+		            if(!$res_cobro){
+		                $this->log("CRITICO", "El cobro no pudo registrarse", "REVISAR", $turno->id, $datos_turno->nro_turno_rto, "notification");
+		            }
+		            break;
+		        }
+		    }
+		    $datos_mail=new PagoRto;
+		    $datos_mail->id=$turno->id;
+		    $datos_mail->fecha=$turno->fecha;
+		    $datos_mail->hora=$turno->hora;
+		    $datos_mail->url_pago="";
+		    $datos_mail->dominio=$datos_turno->dominio;
+		    $datos_mail->nombre=$datos_turno->nombre;
+		    try{
+		        Mail::to($datos_turno->email)->send(new PagoRtoM($datos_mail));
+		    }catch(\Exception $e){
+		        $this->log("CRITICO", "Fallo al enviar confirmacion por pago del turno al cliente", "MAIL", 0, "", "notification");
+		    }
+		    $respuesta=[
+		        'status' => 'ok'
+		    ];
+		    return $respuesta;
+		}
+		$respuesta=[
+		        'status' => 'ok'
+		    ];
+		return $respuesta;
+	}
+
+    function processMPNotification($id_cobro){	
+		$request_url=$this->getMPUrl().$this->mp_payments_url.$id_cobro.'?access_token='.$this->getMPToken();
+		try{
+		    $response = Http::get($request_url);
+		}catch(\Exception $e){
+		    $this->log("YACARE", "Fallo la consulta de estado del id: ".$id_cobro, "NA", 0, "", "notification");
+		    $respuesta=[
+		        'status' => 'OK'
+		    ];    
+		    return response()->json($respuesta,200);
+		}
+		// BUSCO EL TURNO CON LA REFERENCIA TRAIDA DE LOS DATOS DEL PAGO
+		///////////////////////
+		$turno=Turno::where('id_cobro_yac',$response["external_reference"])->first();
+		// SI LA BUSQUEDA NO DA RESULTADO, REGISTRO EL ERROR
+		///////////////////////
+		if(!$turno){
+		    $this->log("TABLA", "Fallo la consulta en la tabla turnos con el id de cobro: ".$id_cobro, "NA", 0, "", "notification");
+		    $respuesta=[
+		        'status' => 'OK'
+		    ];    
+		    return response()->json($respuesta,200);
+		}
+		////// SI EL PAGO ESTA APROBADO
+		if($response["status"]=='approved'){
+		    // OBTENGO ID DEL TURNO EN LA RTO PARA CONFIRMAR A RTO MENDOZA
+		    /////////////////////////////////////////////////////////////////////
+		    $datos_turno=Datosturno::where('id_turno',$turno->id)->first();
+		    if(!$datos_turno){
+		        $this->log("CRITICO", "No se encuentran datos del turno para confirmar a la RTO.", "CONFIRM", $turno->id, "", "notification");
+		    }
+		    // ACTUALIZO ESTADO DEL TURNO
+		    $res_pagar=Turno::where('id',$turno->id)->update(array('estado' => "P"));
+		    if(!$res_pagar){
+		        $this->log("CRITICO", "Fallo al actualizar el estado del turno a pagado", "REVISAR", $turno->id, $datos_turno->nro_turno_rto, "notification");
+		    }
+		    $res_cobro=Cobro::insert(array(
+		        'fecha' => substr($response["date_approved"],0,19),
+		        'monto' => $response["transaction_amount"],
+		        'metodo' => $response["payment_type_id"].' - '.$response["payment_method_id"],
+		        'nro_op' => 'MP-'.$response["id"],
+		        'origen' => "MercadoPago",
+		        'id_turno' => $turno->id,
+		        'id_cobro' => $id_cobro
+		    ));
+		    if(!$res_cobro){
+		        $this->log("CRITICO", "El cobro no pudo registrarse", "REVISAR", $turno->id, $datos_turno->nro_turno_rto, "notification");
+		    }
+		    try{
+		        $datos_mail=new PagoRto;
+		        $datos_mail->id=$turno->id;
+		        $datos_mail->fecha=$turno->fecha;
+		        $datos_mail->hora=$turno->hora;
+		        $datos_mail->url_pago="";
+		        $datos_mail->dominio=$datos_turno->dominio;
+		        $datos_mail->nombre=$datos_turno->nombre;
+		        Mail::to($datos_turno->email)->send(new PagoRtoM($datos_mail));
+		    }catch(\Exception $e){
+		        $this->log("CRITICO", "Fallo al enviar confirmacion por pago del turno al cliente", "MAIL", $turno->id, $datos_turno->nro_turno_rto, "notification");
+		    }
+		    $respuesta=[
+		        'status' => 'OK'
+		    ];      
+		    return response()->json($respuesta,200);
+		}
+		if($response["status"]=='pending' && ($response["payment_method_id"]=='rapipago' || $response["payment_method_id"]=='pagofacil')){
+		    
+		    $new_date_of_expiration=DateTime::createFromFormat('Y-m-d\TH:i:s.vP', $response["date_of_expiration"]);
+		    $new_date_of_expiration->setTimezone(new \DateTimeZone('-0300'));
+		    $new_date_of_expiration_formatted=$new_date_of_expiration->format('Y-m-d H:i:s');
+		    // actualizar la tabla turnos con la nueva fecha de vencimiento
+		    $res_pagar=Turno::where('id',$turno->id)->update(array('vencimiento' => $new_date_of_expiration_formatted));
+		    $respuesta=[
+		        'status' => 'OK'
+		    ];      
+		    return response()->json($respuesta,200);
+
+		}
+	}
 
     public function getAvailableQuotes(Request $request){
         // valido que el dato venga en formato JSON
@@ -326,10 +519,40 @@ class ApiturnoController extends Controller
             ];
             return response()->json($error_response,404);
         }
+        if($quote->estado=="R" && $payment_platform=='yacare'){
+            $request_url=$this->getNotificationManagerUrl().'/notif'.'/'.$quote->id_cobro_yac;
+            $response = Http::get($request_url);
+            if($response->getStatusCode()==200){
+                $this->processYACNotification($quote->id_cobro_yac);
+                $quote=Turno::where('id',$quote_id)->first();
+                if($quote->estado=='P'){
+                    $error_response=[
+                        'reason' => 'RECENTLY_RESERVED_QUOTE'
+                    ];
+                    return response()->json($error_response,404);
+                }
+            }
+        }
+        if($quote->estado=="R" && $payment_platform=='mercadoPago'){
+            $request_url=$this->getMPUrl().$this->mp_search_preference_url.'?external_reference='.$quote->id_cobro_yac;
+            $res_payment = Http::get($request_url);
+            if($res_payment->getStatusCode()==200){
+                $payment=$res_payment["results"][0];
+                $payment_status=$payment["status"];
+                $payment_id=$payment["id"];
+                if($payment_status=='approved'){
+                    $this->processMPNotification($payment_id);
+                    $quote=Turno::where('id',$quote_id)->first();
+                    if($quote->estado=='P'){
+                        $error_response=[
+                            'reason' => 'RECENTLY_RESERVED_QUOTE'
+                        ];
+                        return response()->json($error_response,404);
+                    }
+                }
+            }
+        }
 
-        
-
-        
         if($plant_name!='sanmartin'){
             $date=getDate();
             if(strlen($date["mon"])==1) $month='0'.$date["mon"]; else $month=$date["mon"];
@@ -998,5 +1221,21 @@ class ApiturnoController extends Controller
 
         return response()->json($respuesta,200);
 
+    }
+
+    public function testFindNotification(Request $request){
+        $paymentId=$request->input('paymentId');
+        $request_url='http://localhost:3001/notif/'.$paymentId;
+        $response = Http::get($request_url);
+        if($response->getStatusCode()!=200){
+            $respuesta=[
+                'status' => 'failed'
+            ];
+            return response()->json($respuesta,404);
+        }
+        $respuesta=[
+            'status' => 'success'
+        ];
+        return response()->json($respuesta,200);
     }
 }
