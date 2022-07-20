@@ -18,6 +18,7 @@ use Exception;
 use Http;
 use DateTime;
 use App\Mail\TurnoRtoM;
+use App\Mail\PagoRtoM;
 use SteamCondenser\Exceptions\SocketException;
 use Illuminate\Support\Facades\Mail;
 use Config;
@@ -32,9 +33,13 @@ class ApiturnoController extends Controller
 
     public $yacare_payments_url='payment-orders-managment/payment-order';
 
+    public $yacare_transactions_url='operations-managment/operations?transaction=';
+
     public $mp_preferences_url="checkout/preferences";
 
     public $mp_search_preference_url="/v1/payments/search";
+
+    public $mp_payments_url='v1/payments/';
 
     public function getRtoUrl(){
         return config('rto.url');
@@ -513,35 +518,26 @@ class ApiturnoController extends Controller
             ];
             return response()->json($error_response,404);
         }
-        if(!($quote->estado=="D" || ($quote->estado=="R" && $quote->vencimiento<$currentDate))){
-            $error_response=[
-                'reason' => 'RECENTLY_RESERVED_QUOTE'
-            ];
-            return response()->json($error_response,404);
-        }
-        if($quote->estado=="R" && $payment_platform=='yacare'){
-            $request_url=$this->getNotificationManagerUrl().'/notif'.'/'.$quote->id_cobro_yac;
-            $response = Http::get($request_url);
-            if($response->getStatusCode()==200){
-                $this->processYACNotification($quote->id_cobro_yac);
-                $quote=Turno::where('id',$quote_id)->first();
-                if($quote->estado=='P'){
-                    $error_response=[
-                        'reason' => 'RECENTLY_RESERVED_QUOTE'
-                    ];
-                    return response()->json($error_response,404);
-                }
+        
+
+        if($plant_name!='sanmartin'){
+            if(str_starts_with($quote->id_cobro_yac,'Y-')){
+                $old_payment_platform='yacare';
+            }else{
+                $old_payment_platform='mercadoPago';
             }
-        }
-        if($quote->estado=="R" && $payment_platform=='mercadoPago'){
-            $request_url=$this->getMPUrl().$this->mp_search_preference_url.'?external_reference='.$quote->id_cobro_yac;
-            $res_payment = Http::get($request_url);
-            if($res_payment->getStatusCode()==200){
-                $payment=$res_payment["results"][0];
-                $payment_status=$payment["status"];
-                $payment_id=$payment["id"];
-                if($payment_status=='approved'){
-                    $this->processMPNotification($payment_id);
+            if(!($quote->estado=="D" || ($quote->estado=="R" && $quote->vencimiento<$currentDate))){
+                $error_response=[
+                    'reason' => 'RECENTLY_RESERVED_QUOTE'
+                ];
+                return response()->json($error_response,404);
+            }
+            if($quote->estado=="R" && $old_payment_platform=='yacare'){
+                $id_cobro=substr($quote->id_cobro_yac,2);
+                $request_url=$this->getNotificationManagerUrl().'/notif'.'/'.$id_cobro;
+                $response = Http::get($request_url);
+                if($response->getStatusCode()==200){
+                    $this->processYACNotification($id_cobro);
                     $quote=Turno::where('id',$quote_id)->first();
                     if($quote->estado=='P'){
                         $error_response=[
@@ -551,9 +547,28 @@ class ApiturnoController extends Controller
                     }
                 }
             }
-        }
-
-        if($plant_name!='sanmartin'){
+            if($quote->estado=="R" && $old_payment_platform=='mercadoPago'){
+                $headers_mercadopago=[
+                    'Authorization' => "Bearer ".$this->getMPToken()
+                ];
+                $request_url=$this->getMPUrl().$this->mp_search_preference_url.'?external_reference='.$quote->id_cobro_yac;
+                $res_payment = Http::withHeaders($headers_mercadopago)->get($request_url);
+                if($res_payment->getStatusCode()==200){
+                    $payment=$res_payment["results"][0];
+                    $payment_status=$payment["status"];
+                    $payment_id=$payment["id"];
+                    if($payment_status=='approved'){
+                        $this->processMPNotification($payment_id);
+                        $quote=Turno::where('id',$quote_id)->first();
+                        if($quote->estado=='P'){
+                            $error_response=[
+                                'reason' => 'RECENTLY_RESERVED_QUOTE'
+                            ];
+                            return response()->json($error_response,404);
+                        }
+                    }
+                }
+            }
             $date=getDate();
             if(strlen($date["mon"])==1) $month='0'.$date["mon"]; else $month=$date["mon"];
             $currentDay=$date["year"]."-".$month."-".$date["mday"];
