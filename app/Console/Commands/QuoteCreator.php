@@ -134,7 +134,7 @@ class QuoteCreator extends Command
 
     public function disponibilizarFranjas($line,$day,$day_name,$days,$hasTwoSlots,$plantName){
         
-        $current_month=(int)date('m',strtotime($day));
+        $current_month=(int)date('m',strtotime($day))-1;
         $from_time=$this->getFromTime($current_month,$days,$day_name,false);
         $to_time=$this->getToTime($current_month,$days,$day_name, false);
        
