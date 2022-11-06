@@ -18,6 +18,7 @@ use Exception;
 use Http;
 use DateTime;
 use App\Mail\TurnoRtoM;
+use App\Mail\TurnoRtoMReviTemp;
 use SteamCondenser\Exceptions\SocketException;
 use Illuminate\Support\Facades\Mail;
 use Config;
@@ -518,7 +519,12 @@ class ApiturnoController extends Controller
         $mail_data->time_to_pay=$this->minutesToHours($expiration_minutes);
 
         try{
-            Mail::to($request_email)->send(new TurnoRtoM($mail_data));
+            if($plant_name=='lasheras' || $plant_name=='maipu'){
+                Mail::to($request_email)->send(new TurnoRtoMReviTemp($mail_data));
+            }else{
+                Mail::to($request_email)->send(new TurnoRtoM($mail_data));
+            }
+            
         }catch(\Exception $e){
             $this->log("CRITICO", "Fallo al enviar datos del turno al cliente", "MAIL", $quote->id, $rto_quote_number, "solicitarTurno");
         }
