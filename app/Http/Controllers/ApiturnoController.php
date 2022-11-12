@@ -519,7 +519,7 @@ class ApiturnoController extends Controller
         $mail_data->time_to_pay=$this->minutesToHours($expiration_minutes);
 
         try{
-            if($plant_name=='lasheras' || $plant_name=='maipu'){
+            if($plant_name=='lasheras' || $plant_name=='maipu' || $plant_name=='godoycruz' || $plant_name=='rivadavia'){
                 Mail::to($request_email)->send(new TurnoRtoMReviTemp($mail_data));
             }else{
                 Mail::to($request_email)->send(new TurnoRtoM($mail_data));

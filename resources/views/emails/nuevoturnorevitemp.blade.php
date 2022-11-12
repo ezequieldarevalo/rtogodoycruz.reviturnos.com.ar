@@ -50,7 +50,7 @@ p{
     <div class="cont">
         <p>
             <span class="dato-alert">Atencion!!</span>
-            <span class="dato">Recuerde que si su turno corresponde a una fecha correspondiente al año 2023, deberá abonar la diferencia de la tarifa en el establecimiento a la hora de realizar la RTO.</span>
+            <span class="dato">Recuerde que si su turno corresponde a una fecha correspondiente al año 2023, deberá abonar la diferencia por la tarifa vigente al momento de la inspección en el establecimiento.</span>
         </p>
         <span class="dato">Usted acaba de reservar un turno para realizar la RTO en la planta {{ $turnomail->plant_name }}</span>
         <br/><br/>
