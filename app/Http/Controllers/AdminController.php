@@ -36,20 +36,28 @@ class AdminController extends Controller
             ['fecha' ,'=', $dia_actual],
             ['estado' ,'=', "P"]
         ];
-        $conditions2=[
+        $conditions2a=[
             ['fecha' ,'=', $dia_actual],
             ['estado' ,'=', "C"]
+        ];
+        $conditions2b=[
+            ['fecha' ,'=', $dia_actual],
+            ['estado' ,'=', "T"]
         ];
         $conditions3=[
             ['fecha' ,'>=', $dia_actual],
             ['estado' ,'=', "P"]
         ];
-        $conditions4=[
+        $conditions4a=[
             ['fecha' ,'>=', $dia_actual],
             ['estado' ,'=', "C"]
         ];
-        $turnos=Turno::where($conditions)->orWhere($conditions2)->orderBy('hora')->get();
-        $dias_turno=Turno::where($conditions3)->orWhere($conditions4)->distinct('fecha')->get(['fecha']);
+        $conditions4b=[
+            ['fecha' ,'>=', $dia_actual],
+            ['estado' ,'=', "T"]
+        ];
+        $turnos=Turno::where($conditions)->orWhere($conditions2a)->orWhere($conditions2b)->orderBy('hora')->get();
+        $dias_turno=Turno::where($conditions3)->orWhere($conditions4a)->orWhere($conditions4b)->distinct('fecha')->get(['fecha']);
         $dias_futuros=[];
         foreach ($dias_turno as $dia){
             array_push($dias_futuros,$dia);
@@ -88,7 +96,11 @@ class AdminController extends Controller
             ['fecha' ,'=', $dia],
             ['estado' ,'=', "C"]
         ];
-        $turnos=Turno::where($conditions)->orWhere($conditions2)->orderBy('hora')->get();
+        $conditions3=[
+            ['fecha' ,'=', $dia],
+            ['estado' ,'=', "T"]
+        ];
+        $turnos=Turno::where($conditions)->orWhere($conditions2)->orWhere($conditions3)->orderBy('hora')->get();
         $resultado=[];
         foreach ($turnos as $turno){
             $turno->datos;
@@ -539,6 +551,35 @@ class AdminController extends Controller
             'turnos' => $turnos
         ];
         return response()->json($respuesta,200);
+    }
+
+    public function registrarRealizacionTurno(Request $request){
+        $validator = Validator::make($request->all(), [
+            'id_turno' => 'required|integer'
+        ]);
+        if ($validator->fails()) {
+            $respuesta=[
+                'status' => 'failed',
+                'mensaje' => "Datos inválidos"
+            ];
+            return response()->json($respuesta,400);
+        }
+        $id_turno=$request->input("id_turno");
+        $turno=Turno::where('id',$id_turno)->first();
+        if($turno->estado=='P'){
+            $res_realizar=Turno::where('id',$id_turno)->update(array('estado' => "T"));
+            $respuesta=[
+                'status' => 'success',
+                'message' => 'OK'
+            ];
+            return response()->json($respuesta,200);
+        }else{
+            $respuesta=[
+                'status' => 'failed',
+                'message' => 'El turno debe estar pagado para registrar la realización'
+            ];
+            return response()->json($respuesta,404);
+        }
     }
     
 }

@@ -34,14 +34,9 @@ Route::group([
     Route::post('getQuotes', [ApiturnoController::class, 'getAvailableQuotes']);
     Route::post('notif', [PagosController::class, 'notification']);
     Route::post('notifMeli', [PagosController::class, 'notificationMeli']);
-    // Route::post('regAte', [AdminController::class, 'registrarAtencion']);
     Route::post('getQuotesForResc', [ApiturnoController::class, 'getAvailableQuotesForReschedule']);
     Route::post('changeDate', [ApiturnoController::class, 'changeQuoteDate']);
     Route::post('cancelQuote', [ApiturnoController::class, 'cancelQuote']);
-    
-
-    
-
     Route::group([
       'middleware' => 'auth:api'
     ], function() {
@@ -55,10 +50,9 @@ Route::group([
         Route::post('creTur', [AdminController::class, 'crearTurno']);
         Route::post('regPag', [AdminController::class, 'registrarPago']);
         Route::get('turId', [AdminController::class, 'buscarTurnoPorId']);
-    Route::get('turDom', [AdminController::class, 'buscarTurnoPorDominio']);
-    Route::get('obtTurRep', [AdminController::class, 'obtenerTurnosParaReprog']);
-    Route::post('repTur', [AdminController::class, 'reprogramarTurno']);
-        
-        
+        Route::get('turDom', [AdminController::class, 'buscarTurnoPorDominio']);
+        Route::get('obtTurRep', [AdminController::class, 'obtenerTurnosParaReprog']);
+        Route::post('repTur', [AdminController::class, 'reprogramarTurno']);
+        Route::post('regRealTur', [AdminController::class, 'registrarRealizacionTurno']);
     });
 });
