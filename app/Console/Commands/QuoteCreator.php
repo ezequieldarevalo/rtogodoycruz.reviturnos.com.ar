@@ -57,7 +57,7 @@ class QuoteCreator extends Command
 
         $hasTwoSlots=$this->argument('hasTwoSlots');
         $plantName=$this->argument('plantName');
-        echo $hasTwoSlots.' '.$plantName;
+        echo 'plantName:'.$plantName;
         $weekdays = array("sunday","monday","tuesday","wednesday","thursday","friday","saturday");
 		// importo configuraciones de la planta
 		$config=Config::first();
@@ -143,6 +143,7 @@ class QuoteCreator extends Command
         }
         
         if($hasTwoSlots){
+            echo "hastwoSlots";
             $second_slot_from_time=$this->getFromTime($current_month,$days,$day_name, true);
             $second_slot_to_time=$this->getToTime($current_month,$days,$day_name, true);
             if($second_slot_from_time!=0 || $second_slot_to_time!=0){
@@ -176,7 +177,12 @@ class QuoteCreator extends Command
                 }
                 $this->disponibilizarHoraTurnosNoStandard($dia,$inicio,$topePorHora,$origen,$idLinea,$firstHour,$lastHour,$fds);
             }else{
-                $this->disponibilizarHoraTurnos($dia,$inicio,$topePorHora,$origen,$idLinea);
+                if($plantName=='revitotal'){
+                    $this->disponibilizarHoraTurnosRevitotal($dia,$inicio,$topePorHora,$origen,$idLinea,$firstHour,$lastHour);
+                }else{
+                    $this->disponibilizarHoraTurnos($dia,$inicio,$topePorHora,$origen,$idLinea);
+                }
+                
             }
             
             $inicio++;
@@ -276,6 +282,62 @@ class QuoteCreator extends Command
                             'id_cobro_yac' => ""
                         ));
                     }
+                }
+                $minTurno=$minTurno+$frecuencia;
+            }
+        }
+    }
+
+    public function disponibilizarHoraTurnosRevitotal($diaTurno,$horaTurno,$topePorHora,$origen,$idLinea, $firstHour, $lastHour){
+
+        $frecuencia=60/$topePorHora*100;
+        $minTurno=0;
+        
+
+        if($lastHour){
+            while($minTurno<5000){
+                $time=$minTurno+$horaTurno*10000;
+                $conditions=[
+                    ['fecha' ,'=', $diaTurno],
+                    ['hora' ,'=', $time],
+                    ['id_linea' ,'=', $idLinea]
+                ];
+                $exists=Turno::where($conditions)->first();
+                if(!$exists){
+                    Turno::insert(array(
+                        'fecha' => $diaTurno,
+                        'hora' => $minTurno+$horaTurno*10000,
+                        'estado' => "D",
+                        'origen' => $origen,
+                        'observaciones' => "Proceso diario",
+                        'id_linea' => $idLinea,
+                        'id_cobro_yac' => ""
+                    ));
+                }
+                
+                $minTurno=$minTurno+$frecuencia;
+            }
+        }else{
+            while($minTurno<6000){
+                
+                $time=$minTurno+$horaTurno*10000;
+                $conditions=[
+                    ['fecha' ,'=', $diaTurno],
+                    ['hora' ,'=', $time],
+                    ['id_linea' ,'=', $idLinea]
+                ];
+                $exists=Turno::where($conditions)->first();
+                
+                if(!$exists){
+                    Turno::insert(array(
+                        'fecha' => $diaTurno,
+                        'hora' => $minTurno+$horaTurno*10000,
+                        'estado' => "D",
+                        'origen' => $origen,
+                        'observaciones' => "Proceso diario",
+                        'id_linea' => $idLinea,
+                        'id_cobro_yac' => ""
+                    ));
                 }
                 $minTurno=$minTurno+$frecuencia;
             }
