@@ -680,7 +680,7 @@ class ApiturnoController extends Controller
         $turno_anterior=Turno::find($id_turno_ant);
         $turno_nuevo=Turno::find($id_turno_nuevo);
 
-        if($turno_anterior->estado!="P" && $turno_anterior->estado!="C"){
+        if($turno_anterior->estado!="P" && $turno_anterior->estado!="C" && $turno_anterior->estado!="T"){
 
             $respuesta=[
                 'reason' => 'INVALID_STATUS'
