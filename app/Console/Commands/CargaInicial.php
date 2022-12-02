@@ -229,6 +229,8 @@ class CargaInicial extends Command
     public function disponibilizarFranja($idLinea,$topePorHora,$origen,$dia,$inicio,$fin){
             
         $maxIter=$fin-$inicio;
+
+        
             
         for($i=0;$i<$maxIter;$i++){
 
