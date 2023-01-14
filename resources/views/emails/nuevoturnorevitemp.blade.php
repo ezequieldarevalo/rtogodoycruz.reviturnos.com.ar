@@ -48,10 +48,6 @@ p{
 
 <body>
     <div class="cont">
-        <p>
-            <span class="dato-alert">Atencion!!</span>
-            <span class="dato">Recuerde que si su turno corresponde al año 2023, deberá abonar la diferencia por la tarifa vigente al momento de la inspección en el establecimiento.</span>
-        </p>
         <span class="dato">Usted acaba de reservar un turno para realizar la RTO en la planta {{ $turnomail->plant_name }}</span>
         <br/><br/>
         <div class="titulo-general">DETALLES DE SU TURNO</div>
@@ -67,10 +63,10 @@ p{
             <span class="titulo-dato">Fecha</span><span class="dato"> &nbsp;{{ $turnomail->fecha }}</span>
         </div>
         <div class="linea-dato">
-            <span class="titulo-dato">Hora</span><span class="dato">&nbsp;{{ $turnomail->hora }}</span>
+            <span class="titulo-dato">Hora</span><span class="dato"> &nbsp;{{ $turnomail->hora }}</span>
         </div>
         <div class="linea-dato">
-            <span class="titulo-dato">Id de turno</span><span class="dato">&nbsp;{{ $turnomail->id }}</span>
+            <span class="titulo-dato">Id de turno</span><span class="dato"> &nbsp;{{ $turnomail->id }}</span>
         </div>
         <!-- if payments is active -->
         @if (!$turnomail->no_payment)
