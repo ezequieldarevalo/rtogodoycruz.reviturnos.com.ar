@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PagoRto extends Model
+class ReprogTurnoRto extends Model
 {
     use HasFactory;
 
@@ -15,7 +15,7 @@ class PagoRto extends Model
     	"hora",
         "dominio",
         "nombre",
-        "change_date_url"
+        "plant_name"
     ];
 
 }

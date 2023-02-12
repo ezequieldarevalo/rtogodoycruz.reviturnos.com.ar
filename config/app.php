@@ -5,6 +5,8 @@ return [
     'no_payment' => env('NO_PAYMENT', false),
 
     'plant_name' => env('PLANT_NAME', ''),
+
+    'quotes_front_url' => env('QUOTES_FRONT_URL', 'https://turnos.reviturnos.com.ar'),
     /*
     |--------------------------------------------------------------------------
     | Application Name
