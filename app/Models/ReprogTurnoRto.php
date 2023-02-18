@@ -15,7 +15,8 @@ class ReprogTurnoRto extends Model
     	"hora",
         "dominio",
         "nombre",
-        "plant_name"
+        "plant_name",
+        "change_date_url"
     ];
 
 }

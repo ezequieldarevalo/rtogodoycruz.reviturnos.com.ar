@@ -15,6 +15,7 @@ class PagoRto extends Model
     	"hora",
         "dominio",
         "nombre",
+        "plant_name",
         "change_date_url"
     ];
 

@@ -69,6 +69,10 @@ p{
             <span class="titulo-dato">Id de turno</span><span class="dato"> &nbsp;{{ $turnomail->id }}</span>
         </div>
 
+        <p>
+            <span class="dato">Si lo desea, puede reprogramar su turno haciendo <a href="{{ $turnomail->change_date_url }}">click aquí</a></span>
+        </p>
+
     </div>
 </body>
 </html>

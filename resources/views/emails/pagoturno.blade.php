@@ -48,7 +48,7 @@ p{
 
 <body>
     <div class="cont">
-        <span class="dato">Su turno para realizar la RTO en la planta Godoy Cruz RTVO Centro Express ha sido confirmado.</span>
+        <span class="dato">Su turno para realizar la RTO en la planta {{ $turnomail->plant_name }} ha sido confirmado.</span>
         <br/><br/>
         <div class="titulo-general">DETALLES DE SU TURNO</div>
         <br/>
@@ -70,7 +70,7 @@ p{
         </div>
 
         <p>
-            <span class="dato">Para reprogramar su turno puede hacer haciendo <a href="{{ $turnomail->change_date_url }}">Click aquí</a></span>
+            <span class="dato">Si lo desea, puede reprogramar su turno haciendo <a href="{{ $turnomail->change_date_url }}">click aquí</a></span>
         </p>
 
 

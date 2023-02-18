@@ -37,6 +37,12 @@ class ApiturnoController extends Controller
 
     public $mp_preferences_url="checkout/preferences";
 
+    public $change_date_suffix='/changeDate';
+
+    public function getQuotesFrontUrl(){
+        return config('app.quotes_front_url');
+    }
+
     public function getRtoUrl(){
         return config('rto.url');
     }
@@ -119,6 +125,10 @@ class ApiturnoController extends Controller
 
     public function minutesToHours($minutes){
         return floor($minutes / 60);
+    }
+
+    public function getChangeDateUrl($quote_id){
+        return $this->getQuotesFrontUrl().$this->change_date_suffix.'/'.$this->getPlantName().'/'.$quote_id;
     }
 
     public function getFormattedPlantName($name){
@@ -787,7 +797,8 @@ class ApiturnoController extends Controller
         $mail_data->dominio=$turno_nuevo->datos->dominio;
         $mail_data->nombre=$turno_nuevo->datos->nombre;
         $mail_data->plant_name=$this->getFormattedPlantName($this->getPlantName());
-
+        $mail_data->change_date_url=$this->getChangeDateUrl($turno_nuevo->id);
+        
         try{
             Mail::to($turno_nuevo->datos->email)->send(new ReprogTurnoRtoM($mail_data));
         }catch(\Exception $e){
@@ -832,7 +843,7 @@ class ApiturnoController extends Controller
 
         $turno=Turno::find($id_turno);
 
-        if($turno->estado!="C"){
+        if($turno->estado=="C" || $turno->estado=="P"){
 
             $respuesta=[
                 'reason' => 'INVALID_STATUS'
