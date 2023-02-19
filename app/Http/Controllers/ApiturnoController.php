@@ -843,7 +843,7 @@ class ApiturnoController extends Controller
 
         $turno=Turno::find($id_turno);
 
-        if($turno->estado=="C" || $turno->estado=="P"){
+        if($turno->estado=="C" || $turno->estado=="P" || $turno->estado=="T"){
 
             $respuesta=[
                 'reason' => 'INVALID_STATUS'
