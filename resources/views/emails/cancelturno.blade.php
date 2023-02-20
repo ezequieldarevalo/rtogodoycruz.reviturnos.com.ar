@@ -48,9 +48,9 @@ p{
 
 <body>
     <div class="cont">
-        <span class="dato">Usted acaba de reservar un turno para realizar la RTO en la planta {{ $turnomail->plant_name }}</span>
+        <span class="dato">Usted acaba de cancelar su turno para realizar la RTO en la planta {{ $turnomail->plant_name }}</span>
         <br/><br/>
-        <div class="titulo-general">DETALLES DE SU TURNO</div>
+        <div class="titulo-general">DETALLES DEL TURNO CANCELADO</div>
         <br/>
         
         <div class="linea-dato">
@@ -68,16 +68,6 @@ p{
         <div class="linea-dato">
             <span class="titulo-dato">Id de turno</span><span class="dato"> &nbsp;{{ $turnomail->id }}</span>
         </div>
-        <!-- if payments is active -->
-        @if (!$turnomail->no_payment)
-        <p>
-            <span class="dato">Recuerde que a partir de este momento cuenta con {{ $turnomail->time_to_pay }}hs para realizar el pago, de lo contrario, será automáticamente cancelado.</span><br/><span class="dato">Para realizar el pago si no lo hizo, puede hacerlo haciendo <a href="#">click aquí</a>.</span>
-        </p>
-        @endif
-
-        <p>
-            <span class="dato">Si lo desea, puede cancelar su turno haciendo <a href="{{ $turnomail->cancel_quote_url }}">click aquí</a></span>
-        </p>
 
     </div>
 </body>

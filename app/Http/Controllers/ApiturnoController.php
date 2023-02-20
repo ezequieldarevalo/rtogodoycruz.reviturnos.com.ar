@@ -11,6 +11,8 @@ use App\Models\Datosturno;
 use App\Models\Token;
 use App\Models\Precio;
 use App\Models\TurnoRto;
+use App\Models\ReprogTurnoRto;
+use App\Models\CancelTurnoRto;
 use App\Models\Logerror;
 use Validator;
 use App\Exceptions\MyOwnException;
@@ -18,6 +20,8 @@ use Exception;
 use Http;
 use DateTime;
 use App\Mail\TurnoRtoM;
+use App\Mail\ReprogTurnoRtoM;
+use App\Mail\CancelTurnoRtoM;
 use App\Mail\TurnoRtoMReviTemp;
 use SteamCondenser\Exceptions\SocketException;
 use Illuminate\Support\Facades\Mail;
@@ -34,6 +38,14 @@ class ApiturnoController extends Controller
     public $yacare_payments_url='payment-orders-managment/payment-order';
 
     public $mp_preferences_url="checkout/preferences";
+
+    public $change_date_suffix='/changeDate';
+
+    public $cancel_quote_suffix='/cancelQuote';
+
+    public function getQuotesFrontUrl(){
+        return config('app.quotes_front_url');
+    }
 
     public function getRtoUrl(){
         return config('rto.url');
@@ -119,6 +131,14 @@ class ApiturnoController extends Controller
         return floor($minutes / 60);
     }
 
+    public function getChangeDateUrl($quote_id){
+        return $this->getQuotesFrontUrl().$this->change_date_suffix.'/'.$this->getPlantName().'/'.$quote_id;
+    }
+
+    public function getCancelQuoteUrl($quote_id){
+        return $this->getQuotesFrontUrl().$this->cancel_quote_suffix.'/'.$this->getPlantName().'/'.$quote_id;
+    }
+
     public function getFormattedPlantName($name){
         if($name=='lasheras') return 'Revitotal - Las Heras';
         if($name=='maipu') return 'Revitotal - Maipu';
@@ -144,44 +164,15 @@ class ApiturnoController extends Controller
         Logerror::insert($error);
     }
 
-    public function getAvailableQuotes(Request $request){
-        // valido que el dato venga en formato JSON
-        if($request->header('Content-Type')!="application/json"){
-            $error_response=[
-                'status' => 'failed',
-                'message' => "Data must be in json format"
-            ];
-            return response()->json($error_response,400);
-        }
-        // valido que el dato numero de turno sea un entero y se encuentre presente
-        $validator = Validator::make($request->all(), [
-            'tipoVehiculo' => 'required|string|max:100'
-        ]);
-        if ($validator->fails()) { 
-            $error_response=[
-                'status' => 'failed',
-                'message' => "Invalid data"
-            ];      
-            return response()->json($error_response,400);
-        }
-        $rto_quote_number=0;
-        $tipo_vehiculo=$request->input('tipoVehiculo');
+    public function getQuotesFromVehicleType($vehicle_type){
         $ignore_lines=$this->getIgnoreLines();
         $plant_name=$this->getPlantName();
-
-        $vehicle=Precio::where('descripcion',$tipo_vehiculo)->first();
-        if(!$vehicle){
-            $error_response=[
-                'reason' => 'INVALID_VEHICLE'
-            ];
-            return response()->json($error_response,404);
-        }
         $date_vs_expiration=new DateTime();
         $date=getDate();
         if(strlen($date["mon"])==1) $month='0'.$date["mon"]; else $month=$date["mon"];
         $currentDay=$date["year"]."-".$month."-".$date["mday"];
         $conditions=[
-            "tipo_vehiculo" => $vehicle->tipo_vehiculo
+            "tipo_vehiculo" => $vehicle_type
         ];
         if($ignore_lines){
             $lines = Linea::get();
@@ -205,44 +196,82 @@ class ApiturnoController extends Controller
         ];
         if($plant_name!='sanmartin'){
             $quotes=Turno::select('id', 'fecha', 'hora')->whereIn('id_linea',$quote_lines)
-            ->where($available_conditions)
-            ->orWhere($expired_conditions)
-            ->whereIn('id_linea',$quote_lines)
-            ->orderBy('fecha')
-            ->orderBy('hora')
-            ->get();
-        $days=Turno::whereIn('id_linea',$quote_lines)
-            ->where($available_conditions)
-            ->orWhere($expired_conditions)
-            ->whereIn('id_linea',$quote_lines)
-            ->distinct()
-            ->orderBy('fecha')
-            ->get(['fecha']);
+                ->where($available_conditions)
+                ->orWhere($expired_conditions)
+                ->whereIn('id_linea',$quote_lines)
+                ->orderBy('fecha')
+                ->orderBy('hora')
+                ->get();
+            $days=Turno::whereIn('id_linea',$quote_lines)
+                ->where($available_conditions)
+                ->orWhere($expired_conditions)
+                ->whereIn('id_linea',$quote_lines)
+                ->distinct()
+                ->orderBy('fecha')
+                ->get(['fecha']);
         }else{
             $quotes=Turno::select('id', 'fecha', 'hora')->whereIn('id_linea',$quote_lines)
-            ->where($available_conditions)
-            ->whereIn('id_linea',$quote_lines)
-            ->orderBy('fecha')
-            ->orderBy('hora')
-            ->get();
-        $days=Turno::whereIn('id_linea',$quote_lines)
-            ->where($available_conditions)
-            ->whereIn('id_linea',$quote_lines)
-            ->distinct()
-            ->orderBy('fecha')
-            ->get(['fecha']);
+                ->where($available_conditions)
+                ->whereIn('id_linea',$quote_lines)
+                ->orderBy('fecha')
+                ->orderBy('hora')
+                ->get();
+            $days=Turno::whereIn('id_linea',$quote_lines)
+                ->where($available_conditions)
+                ->whereIn('id_linea',$quote_lines)
+                ->distinct()
+                ->orderBy('fecha')
+                ->get(['fecha']);
         }
         
         $days_array=array();
         foreach($days as $day){
             array_push($days_array,$day->fecha.'T00:00:00');
         }
-        $success_response=[
-            'status' => 'success',
-            'tipo_vehiculo' => $tipo_vehiculo,
-            'precio' => $vehicle->precio,
+        $quotes_info=[
             'dias' => $days_array,
             'turnos' => $quotes
+        ];
+        return $quotes_info;
+    }
+
+    public function getAvailableQuotes(Request $request){
+        // valido que el dato venga en formato JSON
+        if($request->header('Content-Type')!="application/json"){
+            $error_response=[
+                'status' => 'failed',
+                'message' => "Data must be in json format"
+            ];
+            return response()->json($error_response,400);
+        }
+        // valido que el dato numero de turno sea un entero y se encuentre presente
+        $validator = Validator::make($request->all(), [
+            'tipoVehiculo' => 'required|string|max:100'
+        ]);
+        if ($validator->fails()) { 
+            $error_response=[
+                'status' => 'failed',
+                'message' => "Invalid data"
+            ];      
+            return response()->json($error_response,400);
+        }
+        $tipo_vehiculo=$request->input('tipoVehiculo');
+        
+
+        $vehicle=Precio::where('descripcion',$tipo_vehiculo)->first();
+        if(!$vehicle){
+            $error_response=[
+                'reason' => 'INVALID_VEHICLE'
+            ];
+            return response()->json($error_response,404);
+        }
+        $quotes=$this->getQuotesFromVehicleType($vehicle->tipo_vehiculo);
+        $success_response=[
+            'status' => 'success',
+            'tipo_vehiculo' => $vehicle->descripcion,
+            'precio' => $vehicle->precio,
+            'dias' => $quotes['dias'],
+            'turnos' => $quotes['turnos']
         ];
         return response()->json($success_response,200);
     }
@@ -505,7 +534,6 @@ class ApiturnoController extends Controller
             }
         }
 
-        
         // alta en tabla datos_turno
         $mail_data=new TurnoRto;
         $mail_data->id=$quote->id;
@@ -517,14 +545,10 @@ class ApiturnoController extends Controller
         $mail_data->plant_name=$formatted_plant_name;
         $mail_data->no_payment=$this->getNoPayment();
         $mail_data->time_to_pay=$this->minutesToHours($expiration_minutes);
+        $mail_data->cancel_quote_url=$this->getCancelQuoteUrl($quote->id);
 
         try{
-            if($plant_name=='lasheras' || $plant_name=='maipu' || $plant_name=='godoycruz' || $plant_name=='rivadavia'){
-                Mail::to($request_email)->send(new TurnoRtoMReviTemp($mail_data));
-            }else{
-                Mail::to($request_email)->send(new TurnoRtoM($mail_data));
-            }
-            
+            Mail::to($request_email)->send(new TurnoRtoM($mail_data));
         }catch(\Exception $e){
             $this->log("CRITICO", "Fallo al enviar datos del turno al cliente", "MAIL", $quote->id, $rto_quote_number, "solicitarTurno");
         }
@@ -584,10 +608,11 @@ class ApiturnoController extends Controller
             
             return response()->json($respuestaError,404);
         }else{
-            if($turno->estado!='C'){
+            if($turno->estado!='C' && $turno->estado!='P'){
 
                 $respuestaError=[
-                    'reason' => 'NOT CONFIRMED QUOTE'
+                    'reason' => 'NOT CONFIRMED QUOTE',
+                    'estado' => $turno->estado
                 ];
                 return response()->json($respuestaError,404);
 
@@ -604,47 +629,84 @@ class ApiturnoController extends Controller
 
         $vehiculo=Precio::where('descripcion',$datos_turno->tipo_vehiculo)->first();
 
-        // $dia_actual=date("Y-m-d");
-        $dia_actual=new DateTime();
-        $primer_dia_turnos=$dia_actual->modify('+2 days');
+        $quotes=$this->getQuotesFromVehicleType($datos_turno->tipo_vehiculo);
 
-        $conditions=[
-            "tipo_vehiculo" => $vehiculo->tipo_vehiculo
-        ];
-
-        $lineas = Linea::where($conditions)->get();
-
-        $lineas_turnos=array();
-        foreach($lineas as $linea){
-            array_push($lineas_turnos,$linea->id);
-        }
-
-        $conditions=[
-            ['estado','=','D'],
-            ['origen','=','T'],
-            ['fecha','>=',$primer_dia_turnos]
-        ];
-        
-        $turnos=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->whereIn('id_linea',$lineas_turnos)->orderBy('fecha')->orderBy('hora')->get();
-
-        $dias=Turno::whereIn('id_linea',$lineas_turnos)->where($conditions)->whereIn('id_linea',$lineas_turnos)->distinct()->orderBy('fecha')->get(['fecha']);
-
-        $array_dias=array();
-        foreach($dias as $dia){
-            array_push($array_dias,$dia->fecha.'T00:00:00');
-        }
-
-        $respuestaOK=[
+        $success_response=[
             'status' => 'success',
+            'fecha' => $turno->fecha.'T00:00:00',
+            'hora' => $turno->hora,
             'tipo_vehiculo' => $datos_turno->tipo_vehiculo,
             'precio' => $vehiculo->precio,
-            'dias' => $array_dias,
-            'turnos' => $turnos,
-            'fecha' => $turno->fecha.'T00:00:00',
-            'hora' => $turno->hora
+            'dias' => $quotes['dias'],
+            'turnos' => $quotes['turnos']
         ];
         
-        return response()->json($respuestaOK,200);
+        return response()->json($success_response,200);
+
+    }
+
+    public function getQuoteForCancel(Request $request){
+
+
+        if($request->header('Content-Type')!="application/json"){
+            $respuesta=[
+                'reason' => 'INVALID_FORMAT'
+            ];
+                    
+            return response()->json($respuesta,400);
+        }
+
+        // valido que el dato numero de turno sea un entero y se encuentre presente
+        $validator = Validator::make($request->all(), [
+            'id_turno' => 'required|integer'
+        ]);
+
+        if ($validator->fails()) {
+            
+            $respuesta=[
+                'reason' => 'INVALID_DATA'
+            ];
+                    
+            return response()->json($respuesta,400);
+        }
+
+        $id_turno=$request->input('id_turno');
+        $fecha_tope_reschedule=new DateTime();
+        $fecha_tope_reschedule->modify('-3 hours');
+
+        $quote=Turno::find($id_turno);
+
+        if(!$quote){
+            $respuestaError=[
+                'reason' => 'INEXISTENT QUOTE'
+            ];
+            
+            return response()->json($respuestaError,404);
+        }else{
+            if($quote->estado!='R' && $quote->estado!='C'){
+
+                $respuestaError=[
+                    'reason' => 'NO CANCELABLE'
+                ];
+                return response()->json($respuestaError,404);
+
+            }
+            // que no sea viejo
+            if($quote->fecha<=$fecha_tope_reschedule->format('Y-m-d')){
+                $respuestaError=[
+                    'reason' => 'OLD QUOTE'
+                ];
+                return response()->json($respuestaError,404);
+            }
+            
+        }
+
+        $success_response=[
+            'status' => 'success',
+            'quote' => $quote
+        ];
+        
+        return response()->json($success_response,200);
 
     }
 
@@ -700,7 +762,7 @@ class ApiturnoController extends Controller
 
         }
 
-        if(!($turno_nuevo->estado=="D")){
+        if($turno_nuevo->estado!="D"){
 	        
             $respuesta=[
                 'reason' => 'INVALID_STATUS'
@@ -716,6 +778,8 @@ class ApiturnoController extends Controller
         ];
 
         $actualizar_turno_nuevo=Turno::where('id',$turno_nuevo->id)->update($datos_futuro_turno);
+
+
             
         if(!$actualizar_turno_nuevo){
                 
@@ -748,6 +812,8 @@ class ApiturnoController extends Controller
             Logerror::insert($error);
 
         }
+
+
 
         $actualizar_id_cobros=Cobro::where('id_turno',$turno_anterior->id)->update(array('id_turno' => $turno_nuevo->id));
             
@@ -791,39 +857,20 @@ class ApiturnoController extends Controller
         // vuelvo a obtener nuevo turno por sus datos nuevos de la tabla de datos
         $turno_nuevo=Turno::find($id_turno_nuevo);
 
-        //enviar correo
 
-        $datos_mail=new TurnoRto;
-        $datos_mail->id=$turno_nuevo->id;
-        $dia=substr($turno_nuevo->fecha,8,2);
-        $mes=substr($turno_nuevo->fecha,5,2);
-        $anio=substr($turno_nuevo->fecha,0,4);
-        $datos_mail->fecha=$dia.'/'.$mes.'/'.$anio;
-        $datos_mail->hora=substr($turno_nuevo->hora,0,5).' HS.';
-        $datos_mail->url_pago="";
-        $datos_mail->dominio=$turno_nuevo->datos->dominio;
-        $datos_mail->nombre=$turno_nuevo->datos->nombre;
-        $datos_mail->url_reprog=$this->getFrontData()['base_url'].$this->repro_url_suffix.$turno_nuevo->id;
-        $datos_mail->url_cancel=$this->getFrontData()['base_url'].$this->cancel_url_suffix.$turno_nuevo->id;
-
-
+        $mail_data=new ReprogTurnoRto;
+        $mail_data->id=$turno_nuevo->id;
+        $mail_data->fecha=$turno_nuevo->fecha;
+        $mail_data->hora=$turno_nuevo->hora;
+        $mail_data->dominio=$turno_nuevo->datos->dominio;
+        $mail_data->nombre=$turno_nuevo->datos->nombre;
+        $mail_data->plant_name=$this->getFormattedPlantName($this->getPlantName());
+        $mail_data->change_date_url=$this->getChangeDateUrl($turno_nuevo->id);
+        
         try{
-            
-            Mail::to($email)->send(new ReprogRtoQuote($datos_mail));
-
+            Mail::to($turno_nuevo->datos->email)->send(new ReprogTurnoRtoM($mail_data));
         }catch(\Exception $e){
-            
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al enviar datos del turno al cliente",
-                "fix" => "MAIL",
-                "id_turno" => $turno_nuevo->id,
-                "nro_turno_rto" => $turno_nuevo->datos->nro_turno_rto,
-                "servicio" => "enviarCorreo"
-            ];
-
-            Logerror::insert($error);
-
+            $this->log("CRITICO", "Fallo al ReprogTurnoRtoMenviar datos del turno reprogramado al cliente", "MAIL", $turno_nuevo->id, 0, "reprogramarTurno");
         }
 
         $respuesta=[
@@ -864,7 +911,7 @@ class ApiturnoController extends Controller
 
         $turno=Turno::find($id_turno);
 
-        if($turno->estado!="C"){
+        if($turno->estado!='R' && $turno->estado!='C'){
 
             $respuesta=[
                 'reason' => 'INVALID_STATUS'
@@ -912,76 +959,17 @@ class ApiturnoController extends Controller
 
         }
 
-        //enviar cancelacion a rto
-
-        $nuevoToken=$this->obtenerToken();
-
-        if($nuevoToken["status"]=='failed'){
-
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al obtener token previo a confirmar el turno",
-                "fix" => "CONFIRM",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-
-            Logerror::insert($error);
-
-        }
-
-        try{
-            $url=$this->getRtoData()['base_url'].'/api/v1/auth/rechazar/turno';
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($url,array('turno' => $turno->datos->nro_turno_rto));
-
-            if( $response->getStatusCode()!=200){
-
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo al cancelar turno al RTO",
-                    "fix" => "CONFIRM",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $nro_turno_rto,
-                    "servicio" => "notification"
-                ];
-
-                Logerror::insert($error);
-                        
-            }
-
-        }catch(\Exception $e){
-
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al cancelar turno al RTO",
-                "fix" => "CONFIRM",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto,
-                "servicio" => "notification"
-            ];
-
-            Logerror::insert($error);
-                        
-
-        }
-
-        //enviar correo
-
-        $datos_mail=new CancelTurnoRto;
-        $datos_mail->id=$turno->id;
-        $dia=substr($turno->fecha,8,2);
-        $mes=substr($turno->fecha,5,2);
-        $anio=substr($turno->fecha,0,4);
-        $datos_mail->fecha=$dia.'/'.$mes.'/'.$anio;
-        $datos_mail->hora=substr($turno->hora,0,5).' HS.';
-        $datos_mail->dominio=$turno->datos->patente;
-        $datos_mail->nombre=$turno->datos->nombre;
-
+        $mail_data=new CancelTurnoRto;
+        $mail_data->id=$turno->id;
+        $mail_data->fecha=$turno->fecha;
+        $mail_data->hora=$turno->hora;
+        $mail_data->dominio=$turno->datos->dominio;
+        $mail_data->nombre=$turno->datos->nombre;
+        $mail_data->plant_name=$this->getFormattedPlantName($this->getPlantName());
 
         try{
             
-            Mail::to($email)->send(new CancelRtoQuote($datos_mail));
+            Mail::to($email)->send(new CancelTurnoRtoM($mail_data));
 
         }catch(\Exception $e){
             
