@@ -29,6 +29,12 @@ class PagosController extends Controller
 
     public $rto_login_url='api/v1/auth/login';
 
+    public $change_date_suffix='/changeDate';
+
+    public function getQuotesFrontUrl(){
+        return config('app.quotes_front_url');
+    }
+
     public function getRtoUrl(){
         return config('rto.url');
     }
@@ -67,6 +73,23 @@ class PagosController extends Controller
 
     public function getMPRedirectUrl(){
         return config('mercadopago.redirect_url');
+    }
+
+    public function getPlantName(){
+        return config('app.plant_name');
+    }
+
+    public function getFormattedPlantName($name){
+        if($name=='lasheras') return 'Revitotal - Las Heras';
+        if($name=='maipu') return 'Revitotal - Maipu';
+        if($name=='godoycruz') return 'Godoy Cruz';
+        if($name=='sanmartin') return 'San Martin - Mendoza';
+        if($name=='rivadavia') return 'Rivadavia';
+        return '';
+    }
+
+    public function getChangeDateUrl($quote_id){
+        return $this->getQuotesFrontUrl().$this->change_date_suffix.'/'.$this->getPlantName().'/'.$quote_id;
     }
 
     public function log($type, $description, $fix, $quote_id, $rto_quote_id, $service ){
@@ -237,13 +260,16 @@ class PagosController extends Controller
                     break;
                 }
             }
+            $plant_name=$this->getPlantName();
+            $formatted_plant_name=$this->getFormattedPlantName($plant_name);
             $datos_mail=new PagoRto;
             $datos_mail->id=$turno->id;
             $datos_mail->fecha=$turno->fecha;
             $datos_mail->hora=$turno->hora;
-            $datos_mail->url_pago="";
             $datos_mail->dominio=$datos_turno->dominio;
             $datos_mail->nombre=$datos_turno->nombre;
+            $datos_mail->plant_name=$formatted_plant_name;
+            $datos_mail->change_date_url=$this->getChangeDateUrl($turno->id);
             try{
                 Mail::to($datos_turno->email)->send(new PagoRtoM($datos_mail));
             }catch(\Exception $e){
@@ -314,13 +340,16 @@ class PagosController extends Controller
                 $this->log("CRITICO", "El cobro no pudo registrarse", "REVISAR", $turno->id, $datos_turno->nro_turno_rto, "notification");
             }
             try{
+                $plant_name=$this->getPlantName();
+                $formatted_plant_name=$this->getFormattedPlantName($plant_name);
                 $datos_mail=new PagoRto;
                 $datos_mail->id=$turno->id;
                 $datos_mail->fecha=$turno->fecha;
                 $datos_mail->hora=$turno->hora;
-                $datos_mail->url_pago="";
                 $datos_mail->dominio=$datos_turno->dominio;
                 $datos_mail->nombre=$datos_turno->nombre;
+                $datos_mail->plant_name=$formatted_plant_name;
+                $datos_mail->change_date_url=$this->getChangeDateUrl($turno->id);
                 Mail::to($datos_turno->email)->send(new PagoRtoM($datos_mail));
             }catch(\Exception $e){
                 $this->log("CRITICO", "Fallo al enviar confirmacion por pago del turno al cliente", "MAIL", $turno->id, $datos_turno->nro_turno_rto, "notification");
@@ -343,5 +372,29 @@ class PagosController extends Controller
             return response()->json($respuesta,200);
 
         }
+    }
+
+    public function testMail(Request $request){
+
+        try{
+            $plant_name=$this->getPlantName();
+            $formatted_plant_name=$this->getFormattedPlantName($plant_name);
+            $datos_mail=new PagoRto;
+            $datos_mail->id=123284;
+            $datos_mail->fecha="2023-03-06";
+            $datos_mail->hora="10:00:00";
+            $datos_mail->dominio="AF012QH";
+            $datos_mail->nombre="Ezequiel Arevalo";
+            $datos_mail->plant_name=$formatted_plant_name;
+            $datos_mail->change_date_url=$this->getChangeDateUrl(123284);
+            Mail::to("ezequiel.d.arevalo@gmail.com")->send(new PagoRtoM($datos_mail));
+        }catch(\Exception $e){
+            $this->log("CRITICO", "Fallo al enviar confirmacion por pago del turno al cliente", "MAIL", $turno->id, $datos_turno->nro_turno_rto, "notification");
+        }
+        $respuesta=[
+            'status' => 'OK'
+        ];      
+        return response()->json($respuesta,200);
+        
     }
 }

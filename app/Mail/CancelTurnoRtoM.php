@@ -2,13 +2,13 @@
 
 namespace App\Mail;
 
-use App\Models\PagoRto;
+use App\Models\CancelTurnoRto;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class PagoRtoM extends Mailable
+class CancelTurnoRtoM extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -25,7 +25,7 @@ class PagoRtoM extends Mailable
      *
      * @return void
      */
-    public function __construct(PagoRto $turnomail)
+    public function __construct(CancelTurnoRto $turnomail)
     {
         $this->turnomail = $turnomail;
     }
@@ -37,6 +37,6 @@ class PagoRtoM extends Mailable
      */
     public function build()
     {
-        return $this->subject('Turno RTO Mendoza')->view('emails.pagoturno');
+        return $this->subject('Turno RTO Mendoza')->view('emails.cancelturno');
     }
 }

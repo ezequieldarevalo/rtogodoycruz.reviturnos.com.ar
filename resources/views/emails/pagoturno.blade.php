@@ -11,34 +11,68 @@ html{
 }
 
 .titulo-general{
-    font-size: 18px;
-    font-weight: bold
+    font-size: 20px;
+    font-weight: bold;
+    text-decoration: underline;
 }
 
 .titulo-dato{
+    width: 80px;
     font-size: 15px;
-    text-decoration: underline
+    background-color: grey;
+    border-radius: 4px;
+    padding: 3px;
+    display: inline-block;
+    text-align:center;
+}
+
+.linea-dato{
+    margin-bottom: 10px;
 }
 
 .dato{
-    font-size: 12px
+    font-size: 14px
+}
+
+.dato-alert{
+    color: red;
+    font-weight: bold;
+    font-size: 16px
+}
+
+p{
+    line-height: 25px;
 }
 </style>
 </head>
 
 <body>
     <div class="cont">
-        <span class="dato">Su turno para realizar la RTO en la planta Godoy Cruz RTVO Centro Express ha sido confirmado.</span>
+        <span class="dato">Su turno para realizar la RTO en la planta {{ $turnomail->plant_name }} ha sido confirmado.</span>
         <br/><br/>
-        <div class="titulo-general">Detalles de su turno</div>
+        <div class="titulo-general">DETALLES DE SU TURNO</div>
+        <br/>
         
-        <span class="titulo-dato">Nombre:</span><span class="dato"> &nbsp;{{ $turnomail->nombre }}</span><br/>
-        <span class="titulo-dato">Dominio:</span><span class="dato"> &nbsp;{{ $turnomail->dominio }}</span><br/>
-        <span class="titulo-dato">Fecha:</span><span class="dato"> &nbsp;{{ $turnomail->fecha }}</span><br/>
-        <span class="titulo-dato">Hora:</span><span class="dato">&nbsp; {{ $turnomail->hora }}</span><br/>
-        <span class="titulo-dato">Id de turno:</span><span class="dato">&nbsp; {{ $turnomail->id }}</span><br/>
+        <div class="linea-dato">
+            <div class="titulo-dato">Nombre</div><span class="dato"> &nbsp;{{ $turnomail->nombre }}</span>
+        </div>
+        <div class="linea-dato">
+            <span class="titulo-dato">Dominio</span><span class="dato"> &nbsp;{{ $turnomail->dominio }}</span>
+        </div>
+        <div class="linea-dato">
+            <span class="titulo-dato">Fecha</span><span class="dato"> &nbsp;{{ $turnomail->fecha }}</span>
+        </div>
+        <div class="linea-dato">
+            <span class="titulo-dato">Hora</span><span class="dato"> &nbsp;{{ $turnomail->hora }}</span>
+        </div>
+        <div class="linea-dato">
+            <span class="titulo-dato">Id de turno</span><span class="dato"> &nbsp;{{ $turnomail->id }}</span>
+        </div>
 
-		<span class="dato">Muchas gracias por confiar en nosotros.</span><br/>
+        <p>
+            <span class="dato">Si lo desea, puede reprogramar su turno haciendo <a href="{{ $turnomail->change_date_url }}">click aquí</a></span>
+        </p>
+
 
     </div>
 </body>
