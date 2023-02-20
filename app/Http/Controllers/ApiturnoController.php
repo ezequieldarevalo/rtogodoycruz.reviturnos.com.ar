@@ -12,6 +12,7 @@ use App\Models\Token;
 use App\Models\Precio;
 use App\Models\TurnoRto;
 use App\Models\ReprogTurnoRto;
+use App\Models\CancelTurnoRto;
 use App\Models\Logerror;
 use Validator;
 use App\Exceptions\MyOwnException;
@@ -20,6 +21,7 @@ use Http;
 use DateTime;
 use App\Mail\TurnoRtoM;
 use App\Mail\ReprogTurnoRtoM;
+use App\Mail\CancelTurnoRtoM;
 use App\Mail\TurnoRtoMReviTemp;
 use SteamCondenser\Exceptions\SocketException;
 use Illuminate\Support\Facades\Mail;
@@ -38,6 +40,8 @@ class ApiturnoController extends Controller
     public $mp_preferences_url="checkout/preferences";
 
     public $change_date_suffix='/changeDate';
+
+    public $cancel_quote_suffix='/cancelQuote';
 
     public function getQuotesFrontUrl(){
         return config('app.quotes_front_url');
@@ -129,6 +133,10 @@ class ApiturnoController extends Controller
 
     public function getChangeDateUrl($quote_id){
         return $this->getQuotesFrontUrl().$this->change_date_suffix.'/'.$this->getPlantName().'/'.$quote_id;
+    }
+
+    public function getCancelQuoteUrl($quote_id){
+        return $this->getQuotesFrontUrl().$this->cancel_quote_suffix.'/'.$this->getPlantName().'/'.$quote_id;
     }
 
     public function getFormattedPlantName($name){
@@ -538,6 +546,7 @@ class ApiturnoController extends Controller
         $mail_data->plant_name=$formatted_plant_name;
         $mail_data->no_payment=$this->getNoPayment();
         $mail_data->time_to_pay=$this->minutesToHours($expiration_minutes);
+        $mail_data->cancel_quote_url=$this->getCancelQuoteUrl($quote->id);
 
         try{
             if($plant_name=='lasheras' || $plant_name=='maipu' || $plant_name=='godoycruz' || $plant_name=='rivadavia'){
@@ -636,6 +645,71 @@ class ApiturnoController extends Controller
             'precio' => $vehiculo->precio,
             'dias' => $quotes['dias'],
             'turnos' => $quotes['turnos']
+        ];
+        
+        return response()->json($success_response,200);
+
+    }
+
+    public function getQuoteForCancel(Request $request){
+
+
+        if($request->header('Content-Type')!="application/json"){
+            $respuesta=[
+                'reason' => 'INVALID_FORMAT'
+            ];
+                    
+            return response()->json($respuesta,400);
+        }
+
+        // valido que el dato numero de turno sea un entero y se encuentre presente
+        $validator = Validator::make($request->all(), [
+            'id_turno' => 'required|integer'
+        ]);
+
+        if ($validator->fails()) {
+            
+            $respuesta=[
+                'reason' => 'INVALID_DATA'
+            ];
+                    
+            return response()->json($respuesta,400);
+        }
+
+        $id_turno=$request->input('id_turno');
+        $fecha_tope_reschedule=new DateTime();
+        $fecha_tope_reschedule->modify('-3 hours');
+
+        $quote=Turno::find($id_turno);
+
+        if(!$quote){
+            $respuestaError=[
+                'reason' => 'INEXISTENT QUOTE'
+            ];
+            
+            return response()->json($respuestaError,404);
+        }else{
+            if($quote->estado!='R' && $quote->estado!='C'){
+
+                $respuestaError=[
+                    'reason' => 'NO CANCELABLE'
+                ];
+                return response()->json($respuestaError,404);
+
+            }
+            // que no sea viejo
+            if($quote->fecha<=$fecha_tope_reschedule->format('Y-m-d')){
+                $respuestaError=[
+                    'reason' => 'OLD QUOTE'
+                ];
+                return response()->json($respuestaError,404);
+            }
+            
+        }
+
+        $success_response=[
+            'status' => 'success',
+            'quote' => $quote
         ];
         
         return response()->json($success_response,200);
@@ -802,7 +876,7 @@ class ApiturnoController extends Controller
         try{
             Mail::to($turno_nuevo->datos->email)->send(new ReprogTurnoRtoM($mail_data));
         }catch(\Exception $e){
-            $this->log("CRITICO", "Fallo al enviar datos del turno reprogramado al cliente", "MAIL", $turno_nuevo->id, 0, "reprogramarTurno");
+            $this->log("CRITICO", "Fallo al ReprogTurnoRtoMenviar datos del turno reprogramado al cliente", "MAIL", $turno_nuevo->id, 0, "reprogramarTurno");
         }
 
         $respuesta=[
@@ -843,7 +917,7 @@ class ApiturnoController extends Controller
 
         $turno=Turno::find($id_turno);
 
-        if($turno->estado=="C" || $turno->estado=="P" || $turno->estado=="T"){
+        if($turno->estado!='R' && $turno->estado!='C'){
 
             $respuesta=[
                 'reason' => 'INVALID_STATUS'
@@ -891,73 +965,17 @@ class ApiturnoController extends Controller
 
         }
 
-        //enviar cancelacion a rto
-
-        $nuevoToken=$this->obtenerToken();
-
-        if($nuevoToken["status"]=='failed'){
-
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al obtener token previo a confirmar el turno",
-                "fix" => "CONFIRM",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => "",
-                "servicio" => "notification"
-            ];
-
-            Logerror::insert($error);
-
-        }
-
-        try{
-            $url=$this->getRtoData()['base_url'].'/api/v1/auth/rechazar/turno';
-            $response = Http::withOptions(['verify' => false])->withToken($nuevoToken["token"])->post($url,array('turno' => $turno->datos->nro_turno_rto));
-
-            if( $response->getStatusCode()!=200){
-
-                $error=[
-                    "tipo" => "CRITICO",
-                    "descripcion" => "Fallo al cancelar turno al RTO",
-                    "fix" => "CONFIRM",
-                    "id_turno" => $turno->id,
-                    "nro_turno_rto" => $nro_turno_rto,
-                    "servicio" => "notification"
-                ];
-
-                Logerror::insert($error);
-                        
-            }
-
-        }catch(\Exception $e){
-
-            $error=[
-                "tipo" => "CRITICO",
-                "descripcion" => "Fallo al cancelar turno al RTO",
-                "fix" => "CONFIRM",
-                "id_turno" => $turno->id,
-                "nro_turno_rto" => $nro_turno_rto,
-                "servicio" => "notification"
-            ];
-
-            Logerror::insert($error);
-                        
-
-        }
-
-        $datos_mail=new CancelTurnoRto;
-        $datos_mail->id=$turno->id;
-        $dia=substr($turno->fecha,8,2);
-        $mes=substr($turno->fecha,5,2);
-        $anio=substr($turno->fecha,0,4);
-        $datos_mail->fecha=$dia.'/'.$mes.'/'.$anio;
-        $datos_mail->hora=substr($turno->hora,0,5).' HS.';
-        $datos_mail->dominio=$turno->datos->patente;
-        $datos_mail->nombre=$turno->datos->nombre;
+        $mail_data=new CancelTurnoRto;
+        $mail_data->id=$turno->id;
+        $mail_data->fecha=$turno->fecha;
+        $mail_data->hora=$turno->hora;
+        $mail_data->dominio=$turno->datos->dominio;
+        $mail_data->nombre=$turno->datos->nombre;
+        $mail_data->plant_name=$this->getFormattedPlantName($this->getPlantName());
 
         try{
             
-            Mail::to($email)->send(new CancelRtoQuote($datos_mail));
+            Mail::to($email)->send(new CancelTurnoRtoM($mail_data));
 
         }catch(\Exception $e){
             

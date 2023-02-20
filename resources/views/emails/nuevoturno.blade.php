@@ -42,6 +42,9 @@ html{
         @if (!$turnomail->no_payment)
 	        <span class="dato">Recuerde que a partir de este momento cuenta con {{ $turnomail->time_to_pay }}hs para realizar el pago, de lo contrario, será automáticamente cancelado.</span><br/><span class="dato">Para realizar el pago si no lo hizo, puede hacerlo haciendo <a href="{{ $turnomail->url }}">click aquí</a>.</span>
         @endif
+        <p>
+            <span class="dato">Si lo desea, puede cancelar su turno haciendo <a href="{{ $turnomail->cancel_quote_url }}">click aquí</a></span>
+        </p>
 
     </div>
 </body>

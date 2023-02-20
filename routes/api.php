@@ -35,6 +35,7 @@ Route::group([
     Route::post('notif', [PagosController::class, 'notification']);
     Route::post('notifMeli', [PagosController::class, 'notificationMeli']);
     Route::post('getQuotesForResc', [ApiturnoController::class, 'getAvailableQuotesForReschedule']);
+    Route::post('getQuoteForCancel', [ApiturnoController::class, 'getQuoteForCancel']);
     Route::post('changeDate', [ApiturnoController::class, 'changeQuoteDate']);
     Route::post('cancelQuote', [ApiturnoController::class, 'cancelQuote']);
     Route::get('testMail', [PagosController::class, 'testMail']);
