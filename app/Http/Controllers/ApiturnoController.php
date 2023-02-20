@@ -534,7 +534,6 @@ class ApiturnoController extends Controller
             }
         }
 
-        
         // alta en tabla datos_turno
         $mail_data=new TurnoRto;
         $mail_data->id=$quote->id;
@@ -549,12 +548,7 @@ class ApiturnoController extends Controller
         $mail_data->cancel_quote_url=$this->getCancelQuoteUrl($quote->id);
 
         try{
-            if($plant_name=='lasheras' || $plant_name=='maipu' || $plant_name=='godoycruz' || $plant_name=='rivadavia'){
-                Mail::to($request_email)->send(new TurnoRtoMReviTemp($mail_data));
-            }else{
-                Mail::to($request_email)->send(new TurnoRtoM($mail_data));
-            }
-            
+            Mail::to($request_email)->send(new TurnoRtoM($mail_data));
         }catch(\Exception $e){
             $this->log("CRITICO", "Fallo al enviar datos del turno al cliente", "MAIL", $quote->id, $rto_quote_number, "solicitarTurno");
         }
