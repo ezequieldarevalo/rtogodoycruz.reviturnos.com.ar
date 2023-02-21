@@ -164,6 +164,17 @@ class ApiturnoController extends Controller
         Logerror::insert($error);
     }
 
+    public function getFormattedDate($not_formatted_date){
+        $date_year=substr($not_formatted_date,0,4);
+        $date_month=substr($not_formatted_date,5,2);
+        $date_day=substr($not_formatted_date,8,2);
+        return $date_day.'/'.$date_month.'/'.$date_year;
+    }
+
+    public function getFormattedTime($not_formatted_time){
+        return substr($not_formatted_time, 0, 5).'hs.';
+    }
+
     public function getQuotesFromVehicleType($vehicle_type){
         $ignore_lines=$this->getIgnoreLines();
         $plant_name=$this->getPlantName();
@@ -537,8 +548,8 @@ class ApiturnoController extends Controller
         // alta en tabla datos_turno
         $mail_data=new TurnoRto;
         $mail_data->id=$quote->id;
-        $mail_data->fecha=$quote->fecha;
-        $mail_data->hora=$quote->hora;
+        $mail_data->fecha=$this->getFormattedDate($quote->fecha);
+        $mail_data->hora=$this->getFormattedTime($quote->hora);
         $mail_data->url=$payment_url;
         $mail_data->dominio=$request_domain;
         $mail_data->nombre=$request_name;
@@ -860,8 +871,8 @@ class ApiturnoController extends Controller
 
         $mail_data=new ReprogTurnoRto;
         $mail_data->id=$turno_nuevo->id;
-        $mail_data->fecha=$turno_nuevo->fecha;
-        $mail_data->hora=$turno_nuevo->hora;
+        $mail_data->fecha=$this->getFormattedDate($turno_nuevo->fecha);
+        $mail_data->hora=$this->getFormattedTime($turno_nuevo->hora);
         $mail_data->dominio=$turno_nuevo->datos->dominio;
         $mail_data->nombre=$turno_nuevo->datos->nombre;
         $mail_data->plant_name=$this->getFormattedPlantName($this->getPlantName());
@@ -961,8 +972,8 @@ class ApiturnoController extends Controller
 
         $mail_data=new CancelTurnoRto;
         $mail_data->id=$turno->id;
-        $mail_data->fecha=$turno->fecha;
-        $mail_data->hora=$turno->hora;
+        $mail_data->fecha=$this->getFormattedDate($turno->fecha);
+        $mail_data->hora=$this->getFormattedTime($turno->hora);
         $mail_data->dominio=$turno->datos->dominio;
         $mail_data->nombre=$turno->datos->nombre;
         $mail_data->plant_name=$this->getFormattedPlantName($this->getPlantName());

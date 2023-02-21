@@ -104,6 +104,17 @@ class PagosController extends Controller
         Logerror::insert($error);
     }
 
+    public function getFormattedDate($not_formatted_date){
+        $date_year=substr($not_formatted_date,0,4);
+        $date_month=substr($not_formatted_date,5,2);
+        $date_day=substr($not_formatted_date,8,2);
+        return $date_day.'/'.$date_month.'/'.$date_year;
+    }
+
+    public function getFormattedTime($not_formatted_time){
+        return substr($not_formatted_time, 0, 5).'hs.';
+    }
+
     // funcion que busca el token en la tabla, luego si esta vencido obtiene otro y lo guarda
     public function obtenerToken(){
         $token = Token::first();
@@ -264,8 +275,8 @@ class PagosController extends Controller
             $formatted_plant_name=$this->getFormattedPlantName($plant_name);
             $datos_mail=new PagoRto;
             $datos_mail->id=$turno->id;
-            $datos_mail->fecha=$turno->fecha;
-            $datos_mail->hora=$turno->hora;
+            $datos_mail->fecha=$this->getFormattedDate($turno->fecha);
+            $datos_mail->hora=$this->getFormattedTime($turno->hora);
             $datos_mail->dominio=$datos_turno->dominio;
             $datos_mail->nombre=$datos_turno->nombre;
             $datos_mail->plant_name=$formatted_plant_name;
@@ -344,8 +355,8 @@ class PagosController extends Controller
                 $formatted_plant_name=$this->getFormattedPlantName($plant_name);
                 $datos_mail=new PagoRto;
                 $datos_mail->id=$turno->id;
-                $datos_mail->fecha=$turno->fecha;
-                $datos_mail->hora=$turno->hora;
+                $datos_mail->fecha=$this->getFormattedDate($turno->fecha);
+                $datos_mail->hora=$this->getFormattedTime($turno->hora);
                 $datos_mail->dominio=$datos_turno->dominio;
                 $datos_mail->nombre=$datos_turno->nombre;
                 $datos_mail->plant_name=$formatted_plant_name;
@@ -373,28 +384,5 @@ class PagosController extends Controller
 
         }
     }
-
-    public function testMail(Request $request){
-
-        try{
-            $plant_name=$this->getPlantName();
-            $formatted_plant_name=$this->getFormattedPlantName($plant_name);
-            $datos_mail=new PagoRto;
-            $datos_mail->id=123284;
-            $datos_mail->fecha="2023-03-06";
-            $datos_mail->hora="10:00:00";
-            $datos_mail->dominio="AF012QH";
-            $datos_mail->nombre="Ezequiel Arevalo";
-            $datos_mail->plant_name=$formatted_plant_name;
-            $datos_mail->change_date_url=$this->getChangeDateUrl(123284);
-            Mail::to("ezequiel.d.arevalo@gmail.com")->send(new PagoRtoM($datos_mail));
-        }catch(\Exception $e){
-            $this->log("CRITICO", "Fallo al enviar confirmacion por pago del turno al cliente", "MAIL", $turno->id, $datos_turno->nro_turno_rto, "notification");
-        }
-        $respuesta=[
-            'status' => 'OK'
-        ];      
-        return response()->json($respuesta,200);
-        
-    }
+    
 }
