@@ -16,6 +16,11 @@ html{
     text-decoration: underline;
 }
 
+.aviso-importante{
+    font-size: 16px;
+    font-weight: bold;
+}
+
 .titulo-dato{
     width: 80px;
     font-size: 15px;
@@ -49,7 +54,12 @@ p{
 <body>
     <div class="cont">
         <span class="dato">Usted acaba de reservar un turno para realizar la RTO en la planta {{ $turnomail->plant_name }}</span>
-        <br/><br/>
+        <br/>
+        <div class="aviso-importante">RECUERDE QUE SU TURNO SOLO SERÁ CONFIRMADO UNA VEZ REALIZADO EL PAGO DEL MISMO</div>
+        <br/>
+        <div class="aviso-importante">Recuerde también que si su turno corresponde al año 2024, deberá abonar la diferencia por la tarifa vigente al momento de la inspección en el establecimiento.</div>
+        <br/>
+        <br/>
         <div class="titulo-general">DETALLES DE SU TURNO</div>
         <br/>
         
