@@ -57,7 +57,7 @@ p{
         <br/>
         <div class="aviso-importante">RECUERDE QUE SU TURNO SOLO SERÁ CONFIRMADO UNA VEZ REALIZADO EL PAGO DEL MISMO</div>
         <br/>
-        <div class="aviso-importante">Recuerde también que si su turno corresponde al año 2024, deberá abonar la diferencia por la tarifa vigente al momento de la inspección en el establecimiento.</div>
+        <div class="aviso-importante">Recuerde también que si su turno corresponde al año 2025, deberá abonar la diferencia por la tarifa vigente al momento de la inspección en el establecimiento.</div>
         <br/>
         <br/>
         <div class="titulo-general">DETALLES DE SU TURNO</div>

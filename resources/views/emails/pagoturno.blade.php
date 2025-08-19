@@ -70,7 +70,7 @@ p{
         </div>
 
         <p>
-            <span class="dato">Si lo desea, puede reprogramar su turno haciendo <a href="{{ $turnomail->change_date_url }}">click aquí</a></span>
+            <span class="dato">Si desea reprogramar su turno puede hacerlo comunicándose por whatsapp al numero 261-591-4030</span>
         </p>
 
 
