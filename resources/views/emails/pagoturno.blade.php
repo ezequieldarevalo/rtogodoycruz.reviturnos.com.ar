@@ -69,9 +69,11 @@ p{
             <span class="titulo-dato">Id de turno</span><span class="dato"> &nbsp;{{ $turnomail->id }}</span>
         </div>
 
+        @if($turnomail->plant_name == 'Revitotal - Las Heras' || $turnomail->plant_name == 'Revitotal - Maipu')
         <p>
-            <span class="dato">Si desea reprogramar su turno puede hacerlo comunicándose por whatsapp al numero 261-591-4030</span>
+            <span class="dato">Si desea reprogramar su turno puede hacerlo comunicándose por whatsapp al numero 261-770-0710</span>
         </p>
+        @endif
 
 
     </div>
